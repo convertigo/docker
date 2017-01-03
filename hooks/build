@@ -1,6 +1,13 @@
 #!/bin/bash
+
+if [[ "$IMAGE_NAME" == *"convertigo-mbaas"* ]]; then
+    C8O_PROC=64
+elif [[ "$IMAGE_NAME" == *"convertigo-web-connector"* ]]; then
+    C8O_PROC=32
+fi
+
 docker build -t $IMAGE_NAME \
         --build-arg C8O_BASE_VERSION=7.4.2 \
         --build-arg C8O_VERSION=7.4.2 \
-        --build-arg C8O_PROC=64 \
+        --build-arg C8O_PROC=$C8O_PROC \
     .
