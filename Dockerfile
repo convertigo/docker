@@ -86,8 +86,8 @@ RUN C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/con
          chmod o+x /opt/convertigoMobilityPlatform/tomcat/webapps/convertigo/WEB-INF/xvnc/*; \
        fi
 
-RUN echo "export C8O_BASE_VERSION=${C8O_BASE_VERSION} C8O_VERSION=${C8O_VERSION} C8O_PROC=${C8O_PROC}" >/c8o-env.sh
 COPY ./docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh && echo "export C8O_BASE_VERSION=${C8O_BASE_VERSION} C8O_VERSION=${C8O_VERSION} C8O_PROC=${C8O_PROC}" >/c8o-env.sh
 
 VOLUME ["/workspace"]
 EXPOSE 28080
