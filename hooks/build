@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 docker build -t $IMAGE_NAME \
         --build-arg C8O_BASE_VERSION=7.4.2 \
         --build-arg C8O_VERSION=7.4.2 \
