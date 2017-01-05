@@ -62,9 +62,14 @@ WORKDIR /tmp
 
 ARG C8O_BASE_VERSION
 
-RUN C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/readme.txt | sed -nr "s/.*build ([0-9]+).*/\1/p"` \
+RUN export GNUPGHOME="$(mktemp -d)" \
+    && gpg --keyserver pgp.mit.edu --recv-keys 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F \
+    && C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/readme.txt | sed -nr "s/.*build ([0-9]+).*/\1/p"` \
     && curl -SL -o /tmp/convertigo.zip \
         http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/convertigo-server-${C8O_BASE_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.run.zip \
+    && curl -SL -o /tmp/convertigo.zip.asc \
+        http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/convertigo-server-${C8O_BASE_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.run.zip.asc \
+    && gpg --batch --verify /tmp/convertigo.zip.asc /tmp/convertigo.zip \
     && unzip convertigo.zip \
     && chmod u+x *.run \
     && ./*.run -- -al -du -dp -nrc -ns \
@@ -75,11 +80,16 @@ COPY ./root-index.html /opt/convertigoMobilityPlatform/tomcat/webapps/ROOT/index
 
 ARG C8O_VERSION
 
-RUN C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/readme.txt | sed -nr "s/.*build ([0-9]+).*/\1/p"` \
+RUN export GNUPGHOME="$(mktemp -d)" \
+    && gpg --keyserver pgp.mit.edu --recv-keys 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F \
+    && C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/readme.txt | sed -nr "s/.*build ([0-9]+).*/\1/p"` \
     && curl -SL -o /tmp/convertigo.war \
         http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/convertigo-${C8O_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.war \
+    && curl -SL -o /tmp/convertigo.war.asc \
+        http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/convertigo-${C8O_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.war.asc \
+    && gpg --batch --verify /tmp/convertigo.war.asc /tmp/convertigo.war \
     && (cd /opt/convertigoMobilityPlatform/tomcat/webapps/convertigo/ && unzip /tmp/convertigo.war && rm -rf templates) \
-    && rm convertigo.war \
+    && rm -rf /tmp/* \
     && if [ "${C8O_PROC}" = "64" ]; then \
          (cd /opt/convertigoMobilityPlatform/tomcat/webapps/convertigo/WEB-INF && rm -rf xulrunner xvnc); \
        else \
