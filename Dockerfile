@@ -1,4 +1,4 @@
-# Copyright (c) 2001-2011 Convertigo SA.
+# Copyright (c) 2001-2017 Convertigo SA.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Affero General Public License
@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see<http://www.gnu.org/licenses/>.
 
-FROM ubuntu:16.04
+FROM debian:jessie
 
 MAINTAINER Nicolas Albert nicolasa@convertigo.com
 
