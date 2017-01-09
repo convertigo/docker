@@ -1,13 +1,41 @@
 #!/bin/bash
 
-if [[ "$IMAGE_NAME" == *"convertigo-mbaas"* ]]; then
+# SOURCE_BRANCH: the name of the branch or the tag that is currently being tested.
+# SOURCE_COMMIT: the SHA1 hash of the commit being tested.
+# COMMIT_MSG: the message from the commit being tested and built.
+# DOCKER_REPO: the name of the Docker repository being built.
+# DOCKER_TAG: the Docker repository tag being built.
+# IMAGE_NAME: the name and tag of the Docker repository being built. (This variable is a combination of DOCKER_REPO:DOCKER_TAG.)
+
+verlte() {
+    [  "$1" = "`echo -e "$1\n$2" | sort -V | head -n1`" ]
+}
+
+C8O_VERSION=$(echo $DOCKER_TAG | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+
+if [ "$C8O_VERSION" = "" ]; then
+    C8O_VERSION=7.4.3
+fi
+
+if verlte 7.4.2 $C8O_VERSION
+    C8O_BASE_VERSION=7.4.2
+elif verlte 7.4.0 $C8O_VERSION
+    C8O_BASE_VERSION=7.4.0
+elif verlte 7.3.0 $C8O_VERSION
+    C8O_BASE_VERSION=7.3.0
+else
+    echo "don't build under 7.3.0 version"
+    exit 1
+fi
+
+if [[ "$DOCKER_TAG" == *"mbaas"* ]]; then
     C8O_PROC=64
-elif [[ "$IMAGE_NAME" == *"convertigo-web-connector"* ]]; then
+elif [[ "$DOCKER_TAG" == *"web-connector"* ]]; then
     C8O_PROC=32
 fi
 
 docker build -t $IMAGE_NAME \
-        --build-arg C8O_BASE_VERSION=7.4.2 \
-        --build-arg C8O_VERSION=7.4.3 \
+        --build-arg C8O_BASE_VERSION=$C8O_BASE_VERSION \
+        --build-arg C8O_VERSION=$C8O_VERSION \
         --build-arg C8O_PROC=$C8O_PROC \
     .

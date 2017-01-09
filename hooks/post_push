@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# SOURCE_BRANCH: the name of the branch or the tag that is currently being tested.
+# SOURCE_COMMIT: the SHA1 hash of the commit being tested.
+# COMMIT_MSG: the message from the commit being tested and built.
+# DOCKER_REPO: the name of the Docker repository being built.
+# DOCKER_TAG: the Docker repository tag being built.
+# IMAGE_NAME: the name and tag of the Docker repository being built. (This variable is a combination of DOCKER_REPO:DOCKER_TAG.)
+
+C8O_VERSION=$(echo $DOCKER_TAG | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+
+if [ "$C8O_VERSION" = "" ]; then
+    C8O_VERSION=7.4.3
+fi
