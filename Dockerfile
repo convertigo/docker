@@ -27,7 +27,8 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     /usr/share/doc
 
 # grab gosu for easy step-down from root and tini for signal handling
-RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+RUN export GNUPGHOME="$(mktemp -d)" \
+  && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
   && curl -o /usr/local/bin/gosu -fSL "https://github.com/tianon/gosu/releases/download/1.7/gosu-$(dpkg --print-architecture)" \
   && curl -o /usr/local/bin/gosu.asc -fSL "https://github.com/tianon/gosu/releases/download/1.7/gosu-$(dpkg --print-architecture).asc" \
   && gpg --verify /usr/local/bin/gosu.asc \
@@ -39,6 +40,7 @@ RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364
   && gpg --verify /usr/local/bin/tini.asc \
   && rm /usr/local/bin/tini.asc \
   && chmod +x /usr/local/bin/tini
+  && rm -rf /tmp/* \
 
 ARG C8O_PROC
 RUN if [ "${C8O_PROC}" = "32" ]; then \
@@ -63,7 +65,7 @@ WORKDIR /tmp
 ARG C8O_BASE_VERSION
 
 RUN export GNUPGHOME="$(mktemp -d)" \
-    && gpg --keyserver pgp.mit.edu --recv-keys 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F \
+    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F \
     && C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/readme.txt | sed -nr "s/.*build ([0-9]+).*/\1/p"` \
     && curl -SL -o /tmp/convertigo.zip \
         http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/convertigo-server-${C8O_BASE_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.run.zip \
@@ -81,7 +83,7 @@ COPY ./root-index.html /opt/convertigoMobilityPlatform/tomcat/webapps/ROOT/index
 ARG C8O_VERSION
 
 RUN export GNUPGHOME="$(mktemp -d)" \
-    && gpg --keyserver pgp.mit.edu --recv-keys 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F \
+    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F \
     && C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/readme.txt | sed -nr "s/.*build ([0-9]+).*/\1/p"` \
     && curl -SL -o /tmp/convertigo.war \
         http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/convertigo-${C8O_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.war \
