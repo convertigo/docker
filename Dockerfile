@@ -39,8 +39,8 @@ RUN export GNUPGHOME="$(mktemp -d)" \
   && curl -o /usr/local/bin/tini.asc -fSL "https://github.com/krallin/tini/releases/download/v0.9.0/tini.asc" \
   && gpg --verify /usr/local/bin/tini.asc \
   && rm /usr/local/bin/tini.asc \
-  && chmod +x /usr/local/bin/tini
-  && rm -rf /tmp/* \
+  && chmod +x /usr/local/bin/tini \
+  && rm -rf /tmp/*
 
 ARG C8O_PROC
 RUN if [ "${C8O_PROC}" = "32" ]; then \
