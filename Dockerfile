@@ -13,18 +13,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see<http://www.gnu.org/licenses/>.
 
-FROM debian:jessie
+FROM openjdk:8-jre
 
 MAINTAINER Nicolas Albert nicolasa@convertigo.com
+
+ENV CATALINA_HOME /usr/local/tomcat
+RUN mkdir -p "$CATALINA_HOME"
+WORKDIR $CATALINA_HOME
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     unzip \
-    bzip2 \
-  && rm -rf /var/lib/apt/lists/* \
-    /usr/share/man \
-    /usr/share/doc
+  && rm -rf /var/lib/apt/lists/*
 
 # grab gosu for easy step-down from root and tini for signal handling
 RUN export GNUPGHOME="$(mktemp -d)" \
@@ -42,66 +43,50 @@ RUN export GNUPGHOME="$(mktemp -d)" \
   && chmod +x /usr/local/bin/tini \
   && rm -rf /tmp/*
 
-ARG C8O_PROC
-RUN if [ "${C8O_PROC}" = "32" ]; then \
-    dpkg --add-architecture i386 && \
-    apt-get update -y && apt-get install -y --no-install-recommends \    
-      lib32z1 \
-      libgtk2.0-0:i386 \
-      libstdc++6:i386 \
-      libxft2:i386 \
-      libxt6:i386 \
-      libxtst6:i386 \
-    && rm -rf /var/lib/apt/lists/* \
-      /usr/share/man \
-      /usr/share/doc; \
-  elif [ "${C8O_PROC}" = "64" ]; then \
-    echo "64 bit version, skip 32 bit dependences"; \
-  else echo "nor 32 bit or 64 bit, build failed"; exit 1; \
-  fi
+ENV TOMCAT_MAJOR 7
+ENV TOMCAT_VERSION 7.0.72
 
-WORKDIR /tmp
+ENV TOMCAT_TGZ_URL https://archive.apache.org/dist/tomcat/tomcat-$TOMCAT_MAJOR/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz
 
-ARG C8O_BASE_VERSION
-
+ENV TOMCAT_GPG_KEYS 05AB33110949707C93A279E3D3EFE6B686867BA6 07E48665A34DCAFAE522E5E6266191C37C037D42 47309207D818FFD8DCD3F83F1931D684307A10A5 541FBE7D8F78B25E055DDEE13C370389288584E7 61B832AC2F1C5A90F0F9B00A1C506407564C17A3 713DA88BE50911535FE716F5208B0AB1D63011C7 79F7026C690BAA50B92CD8B66A3AD3F4F22C4FED 9BA44C2621385CB966EBA586F72C284D731FABEE A27677289986DB50844682F8ACB77FC2E86E29AC A9C5DF4D22E99998D9875A5110C01C5A2F6059E7 DCFD35E0BF8CA7344752DE8B6FB21E8933C60243 F3A04C595DB5B6A5F1ECA43E3B7BBB100D811BBE F7DA48BB64BCB84ECBA7EE6935CD23C10D498E23
 RUN export GNUPGHOME="$(mktemp -d)" \
-    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F \
-    && C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/readme.txt | sed -nr "s/.*build ([0-9]+).*/\1/p"` \
-    && curl -SL -o /tmp/convertigo.zip \
-        http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/convertigo-server-${C8O_BASE_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.run.zip \
-    && curl -SL -o /tmp/convertigo.zip.asc \
-        http://downloads.sourceforge.net/project/convertigo/${C8O_BASE_VERSION}/convertigo-server-${C8O_BASE_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.run.zip.asc \
-    && gpg --batch --verify /tmp/convertigo.zip.asc /tmp/convertigo.zip \
-    && unzip convertigo.zip \
-    && chmod u+x *.run \
-    && ./*.run -- -al -du -dp -nrc -ns \
-    && (cd /opt/convertigoMobilityPlatform/tomcat/webapps && rm -rf * && mkdir ROOT convertigo) \
-    && rm -rf /tmp/* \
-    && ln -s /home/convertigoMobilityPlatform/convertigo /workspace
-COPY ./root-index.html /opt/convertigoMobilityPlatform/tomcat/webapps/ROOT/index.html
+    && for key in $TOMCAT_GPG_KEYS; do \
+         gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
+       done; \
+    curl -SL -o /tmp/tomcat.tar.gz $TOMCAT_TGZ_URL \
+    && curl -SL -o /tmp/tomcat.tar.gz.asc $TOMCAT_TGZ_URL.asc \
+    && gpg --verify /tmp/tomcat.tar.gz.asc \
+    && tar -xvf /tmp/tomcat.tar.gz --strip-components=1 \
+    && sed -i.bak -e '/protocol="AJP/d' -e 's/port="8080"/port="28080"/' conf/server.xml \
+    && rm -rf webapps/* bin/*.bat conf/server.xml.bak \
+    && rm -rf /tmp/*
 
-ARG C8O_VERSION
+ENV CONVERTIGO_VERSION 7.4.3
+ENV CONVERTIGO_REVISION 42669
 
+ENV CONVERTIGO_WAR_URL https://devplatform.s3.amazonaws.com/refbin/cems/$CONVERTIGO_VERSION/convertigo-$CONVERTIGO_VERSION-v$CONVERTIGO_REVISION-linux32.war
+
+ENV CONVERTIGO_GPG_KEYS 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F
 RUN export GNUPGHOME="$(mktemp -d)" \
-    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F \
-    && C8O_REVISION=`curl -sL -r 0-200 http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/readme.txt | sed -nr "s/.*build ([0-9]+).*/\1/p"` \
-    && curl -SL -o /tmp/convertigo.war \
-        http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/convertigo-${C8O_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.war \
-    && curl -SL -o /tmp/convertigo.war.asc \
-        http://downloads.sourceforge.net/project/convertigo/${C8O_VERSION}/convertigo-${C8O_VERSION}-v${C8O_REVISION}-linux${C8O_PROC}.war.asc \
-    && gpg --batch --verify /tmp/convertigo.war.asc /tmp/convertigo.war \
-    && (cd /opt/convertigoMobilityPlatform/tomcat/webapps/convertigo/ && unzip /tmp/convertigo.war && rm -rf templates) \
-    && rm -rf /tmp/* \
-    && if [ "${C8O_PROC}" = "64" ]; then \
-         (cd /opt/convertigoMobilityPlatform/tomcat/webapps/convertigo/WEB-INF && rm -rf xulrunner xvnc); \
-       else \
-         chmod o+x /opt/convertigoMobilityPlatform/tomcat/webapps/convertigo/WEB-INF/xvnc/*; \
-       fi
+    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$CONVERTIGO_GPG_KEYS" \
+    && curl -SL -o /tmp/convertigo.war $CONVERTIGO_WAR_URL \
+    && curl -SL -o /tmp/convertigo.war.asc $CONVERTIGO_WAR_URL.asc \
+    && gpg --verify /tmp/convertigo.war.asc \
+    && mkdir webapps/ROOT webapps/convertigo \
+    && (cd webapps/convertigo \
+        && unzip -q /tmp/convertigo.war \
+        && rm -rf WEB-INF/xulrunner WEB-INF/xvnc WEB-INF/lib/swt_*) \
+    && rm -rf /tmp/*
 
 COPY ./docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh && echo "export C8O_BASE_VERSION=${C8O_BASE_VERSION} C8O_VERSION=${C8O_VERSION} C8O_PROC=${C8O_PROC}" >/c8o-env.sh
+RUN chmod u+x /docker-entrypoint.sh \
+    && useradd -s /bin/false -m convertigo \
+    && mkdir -p /workspace/lib /workspace/classes \
+    && chown -R convertigo:convertigo conf temp work logs /workspace \
+    && chmod -w conf/*
 
-VOLUME ["/workspace"]
+WORKDIR /workspace
+#VOLUME ["/workspace"]
 EXPOSE 28080
 
 ENTRYPOINT ["tini", "--", "/docker-entrypoint.sh"]

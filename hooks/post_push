@@ -4,15 +4,15 @@
 
 if [ "$C8O_MODE" = "mbaas" ]; then
     docker tag $IMAGE_NAME $DOCKER_REPO:$C8O_VERSION
-    docker push $DOCKER_REPO:$C8O_VERSION
+#    docker push $DOCKER_REPO:$C8O_VERSION
 fi
 
 if [ "$C8O_VERSION" = "$C8O_LATEST" ]; then
     docker tag $IMAGE_NAME $DOCKER_REPO:$C8O_MODE
-    docker push $DOCKER_REPO:$C8O_MODE
+#    docker push $DOCKER_REPO:$C8O_MODE
     
     if [ "$C8O_MODE" = "mbaas" ]; then
         docker tag $IMAGE_NAME $DOCKER_REPO:latest
-        docker push $DOCKER_REPO:latest
+#        docker push $DOCKER_REPO:latest
     fi
 fi

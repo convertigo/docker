@@ -2,8 +2,8 @@
 
 . hooks/versions.sh
 
-docker build -t $IMAGE_NAME \
-        --build-arg C8O_BASE_VERSION=$C8O_BASE_VERSION \
-        --build-arg C8O_VERSION=$C8O_VERSION \
-        --build-arg C8O_PROC=$C8O_PROC \
-    .
+docker build -t $IMAGE_NAME .
+#        --build-arg C8O_BASE_VERSION=$C8O_BASE_VERSION \
+#        --build-arg C8O_VERSION=$C8O_VERSION \
+#        --build-arg C8O_PROC=$C8O_PROC \
+#    .
