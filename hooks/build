@@ -1,13 +1,7 @@
 #!/bin/bash
 
-## parse environment variables
-. versions.sh
+if [[ "$DOCKER_TAG" = web-connector* ]]; then
+    SET_DOCKERFILE="-f Dockerfile-web-connector"
+fi
 
-## run the docker build using parsed variables
-echo_and_run docker build \
-    -t $DOCKER_REPO:$CONVERTIGO_MODE-$CONVERTIGO_VERSION \
-    -f $DOCKER_FILE \
-    $FORCE_TOMCAT_ARGS \
-    --build-arg CONVERTIGO_VERSION=$CONVERTIGO_VERSION \
-    --build-arg CONVERTIGO_REVISION=$CONVERTIGO_REVISION \
-    .
+docker build -t $IMAGE_NAME $SET_DOCKERFILE .
