@@ -61,6 +61,6 @@ if [ "$CONVERTIGO_REVISION" = "" ]; then
 fi
 
 
-## check if this build is requested as latest (end with *)
+## check if this build is requested as latest (end with _)
 
-export CONVERTIGO_LATEST=$(echo $DOCKER_TAG | sed -n 's/.*\*$/yes/p')
+export CONVERTIGO_LATEST=$(echo $DOCKER_TAG | sed -n 's/.*_$/yes/p')
