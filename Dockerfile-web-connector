@@ -13,10 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see<http://www.gnu.org/licenses/>.
 
-## from openjdk instead of tomcat because
+## from debian instead of tomcat or openjdk because
 ## convertigo have an annoying bug with tomcat 7.0.43
+## and the web-connector mode need a i386 openjdk
 
-FROM openjdk:8-jre
+FROM debian:jessie
 
 
 MAINTAINER Nicolas Albert nicolasa@convertigo.com
@@ -25,11 +26,29 @@ ENV CATALINA_HOME /usr/local/tomcat
 RUN mkdir -p "$CATALINA_HOME"
 WORKDIR $CATALINA_HOME
 
-RUN apt-get update -y && apt-get install -y --no-install-recommends \
+RUN dpkg --add-architecture i386 \
+  && apt-get update -y \
+  && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    lib32z1 \
+    libgtk2.0-0:i386 \
+    libstdc++6:i386 \
+    libxft2:i386 \
+    libxt6:i386 \
+    libxtst6:i386 \
     unzip \
   && rm -rf /var/lib/apt/lists/*
+
+
+## install the latest openjdk:i386 for security fixes
+## and remove the unnecessary openjdk:amd64
+
+RUN echo 'deb http://deb.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/jessie-backports.list \
+    && apt-get update -y \
+    && apt-get install -y --no-install-recommends openjdk-8-jre-headless:i386 \
+    && update-java-alternatives --jre-headless -s java-1.8.0-openjdk-i386 \
+    && rm -rf /usr/lib/jvm/java-8-openjdk-amd64 /var/lib/apt/lists/*
 
 
 ## grab gosu for easy step-down from root and tini for signal handling
@@ -87,7 +106,6 @@ ENV CONVERTIGO_GPG_KEYS 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F
 
 
 ## download and extract the convertigo webapps
-## and remove unnecessary components for the mbaas version
 
 RUN export GNUPGHOME="$(mktemp -d)" \
     && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$CONVERTIGO_GPG_KEYS" \
@@ -95,16 +113,13 @@ RUN export GNUPGHOME="$(mktemp -d)" \
     && curl -SL -o /tmp/convertigo.war.asc $CONVERTIGO_WAR_URL.asc \
     && gpg --verify /tmp/convertigo.war.asc \
     && mkdir webapps/ROOT webapps/convertigo \
-    && (cd webapps/convertigo \
-        && unzip -q /tmp/convertigo.war \
-        && rm -rf WEB-INF/xulrunner WEB-INF/xvnc WEB-INF/lib/swt_*) \
+    && (cd webapps/convertigo && unzip -q /tmp/convertigo.war) \
     && rm -rf /tmp/*
-
 
 ## copy the ROOT index that redirect to the 'convertigo' webapps
 
 COPY ./root-index.html webapps/ROOT/index.html
-COPY ./docker-entrypoint.sh / 
+COPY ./docker-entrypoint.sh /
 
 
 ## create a 'convertigo' user and fix some rights
@@ -113,8 +128,8 @@ RUN chmod u+x /docker-entrypoint.sh \
     && useradd -s /bin/false -m convertigo \
     && mkdir -p /workspace/lib /workspace/classes \
     && chown -R convertigo:convertigo conf temp work logs /workspace \
-    && chmod -w conf/*
-
+    && chmod -w conf/* \
+    && chmod a+x webapps/convertigo/WEB-INF/xvnc/*
 
 WORKDIR /workspace
 VOLUME ["/workspace"]

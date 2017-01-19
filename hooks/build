@@ -1,9 +1,13 @@
 #!/bin/bash
 
-. hooks/versions.sh
+## parse environment variables
+. versions.sh
 
-docker build -t $IMAGE_NAME .
-#        --build-arg C8O_BASE_VERSION=$C8O_BASE_VERSION \
-#        --build-arg C8O_VERSION=$C8O_VERSION \
-#        --build-arg C8O_PROC=$C8O_PROC \
-#    .
+## run the docker build using parsed variables
+echo_and_run docker build \
+    -t $DOCKER_REPO:$CONVERTIGO_MODE-$CONVERTIGO_VERSION \
+    -f $DOCKER_FILE \
+    $FORCE_TOMCAT_ARGS \
+    --build-arg CONVERTIGO_VERSION=$CONVERTIGO_VERSION \
+    --build-arg CONVERTIGO_REVISION=$CONVERTIGO_REVISION \
+    .

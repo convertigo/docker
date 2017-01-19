@@ -1,18 +1,24 @@
 #!/bin/bash
 
-. hooks/versions.sh
+## parse environment variables
+. versions.sh
 
-if [ "$C8O_MODE" = "mbaas" ]; then
-    docker tag $IMAGE_NAME $DOCKER_REPO:$C8O_VERSION
-#    docker push $DOCKER_REPO:$C8O_VERSION
+## mbaas is the default mode, declare tag without the mode
+
+if [ "$CONVERTIGO_MODE" = "mbaas" ]; then
+    echo_and_run docker tag $DOCKER_REPO:$CONVERTIGO_MODE-$CONVERTIGO_VERSION $DOCKER_REPO:$CONVERTIGO_VERSION
+    echo_and_run docker push $DOCKER_REPO:$CONVERTIGO_VERSION
 fi
 
-if [ "$C8O_VERSION" = "$C8O_LATEST" ]; then
-    docker tag $IMAGE_NAME $DOCKER_REPO:$C8O_MODE
-#    docker push $DOCKER_REPO:$C8O_MODE
+
+## if latest request, also tag without version
+
+if [ "$CONVERTIGO_LATEST" = "yes" ]; then
+    echo_and_run docker tag $DOCKER_REPO:$CONVERTIGO_MODE-$CONVERTIGO_VERSION $DOCKER_REPO:$CONVERTIGO_MODE
+    echo_and_run docker push $DOCKER_REPO:$CONVERTIGO_MODE
     
-    if [ "$C8O_MODE" = "mbaas" ]; then
-        docker tag $IMAGE_NAME $DOCKER_REPO:latest
-#        docker push $DOCKER_REPO:latest
+    if [ "$CONVERTIGO_MODE" = "mbaas" ]; then
+        echo_and_run docker tag $DOCKER_REPO:$CONVERTIGO_MODE-$CONVERTIGO_VERSION $DOCKER_REPO:latest
+        echo_and_run docker push $DOCKER_REPO:latest
     fi
 fi
