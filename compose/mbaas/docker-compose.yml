@@ -1,7 +1,7 @@
 version: "2"
 services:
     convertigo:
-        image: "convertigo/convertigo-mbaas"
+        image: "convertigo"
         ports:
          - "28080:28080"
         links:
@@ -12,13 +12,17 @@ services:
         environment:
          - JAVA_OPTS=
            -Dconvertigo.engine.billing.enabled=true 
-           -Dconvertigo.engine.billing.persistence.jdbc.username=${ANALYTICS_DB_USER} 
-           -Dconvertigo.engine.billing.persistence.jdbc.password=${ANALYTICS_DB_PASSWORD}
-           -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/${ANALYTICS_DB}
+           -Dconvertigo.engine.billing.persistence.jdbc.username=c8oAnalytics
+           -Dconvertigo.engine.billing.persistence.jdbc.password=c8oAnalytics
+           -Dconvertigo.engine.fullsync.couch.username=admin
+           -Dconvertigo.engine.fullsync.couch.password=fullsyncpassword
     couchdb:
         image: "couchdb"
         ports:
          - "28081:5984"
+        environment:
+         - COUCHDB_USER=admin
+         - COUCHDB_PASSWORD=fullsyncpassword
     mysql:
         image: "mysql"
         ports:
@@ -27,9 +31,9 @@ services:
          - analytics:/var/lib/mysql
         environment:
          - MYSQL_RANDOM_ROOT_PASSWORD=yes
-         - MYSQL_DATABASE=${ANALYTICS_DB}
-         - MYSQL_USER=${ANALYTICS_DB_USER}
-         - MYSQL_PASSWORD=${ANALYTICS_DB_PASSWORD}
+         - MYSQL_DATABASE=c8oAnalytics
+         - MYSQL_USER=c8oAnalytics
+         - MYSQL_PASSWORD=c8oAnalytics
 volumes:
     workspace: {}
     analytics: {}
