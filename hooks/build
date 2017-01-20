@@ -1,7 +1,0 @@
-#!/bin/bash
-
-if [[ "$DOCKER_TAG" = web-connector* ]]; then
-    SET_DOCKERFILE="-f Dockerfile-web-connector"
-fi
-
-docker build -t $IMAGE_NAME $SET_DOCKERFILE .
