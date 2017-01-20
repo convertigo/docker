@@ -118,8 +118,8 @@ RUN export GNUPGHOME="$(mktemp -d)" \
 
 ## copy the ROOT index that redirect to the 'convertigo' webapps
 
-COPY ../root-index.html webapps/ROOT/index.html
-COPY ../docker-entrypoint.sh /
+COPY ./root-index.html webapps/ROOT/index.html
+COPY ./docker-entrypoint.sh /
 
 
 ## create a 'convertigo' user and fix some rights
