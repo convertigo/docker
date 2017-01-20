@@ -14,6 +14,7 @@ services:
            -Dconvertigo.engine.billing.enabled=true 
            -Dconvertigo.engine.billing.persistence.jdbc.username=c8oAnalytics
            -Dconvertigo.engine.billing.persistence.jdbc.password=c8oAnalytics
+           -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/c8oAnalytics
            -Dconvertigo.engine.fullsync.couch.username=admin
            -Dconvertigo.engine.fullsync.couch.password=fullsyncpassword
     couchdb:
