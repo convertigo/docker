@@ -57,13 +57,13 @@ RUN export GNUPGHOME="$(mktemp -d)" \
   && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
   && curl -o /usr/local/bin/gosu -fSL "https://github.com/tianon/gosu/releases/download/1.7/gosu-$(dpkg --print-architecture)" \
   && curl -o /usr/local/bin/gosu.asc -fSL "https://github.com/tianon/gosu/releases/download/1.7/gosu-$(dpkg --print-architecture).asc" \
-  && gpg --batch --verify /usr/local/bin/gosu.asc \
+  && gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
   && rm /usr/local/bin/gosu.asc \
   && chmod +x /usr/local/bin/gosu \
   && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 \
   && curl -o /usr/local/bin/tini -fSL "https://github.com/krallin/tini/releases/download/v0.9.0/tini" \
   && curl -o /usr/local/bin/tini.asc -fSL "https://github.com/krallin/tini/releases/download/v0.9.0/tini.asc" \
-  && gpg --batch --verify /usr/local/bin/tini.asc \
+  && gpg --batch --verify /usr/local/bin/tini.asc /usr/local/bin/tini \
   && rm /usr/local/bin/tini.asc \
   && chmod +x /usr/local/bin/tini \
   && rm -rf /tmp/*
@@ -92,7 +92,7 @@ RUN export GNUPGHOME="$(mktemp -d)" \
        done; \
     curl -fSL -o /tmp/tomcat.tar.gz $TOMCAT_TGZ_URL \
     && curl -fSL -o /tmp/tomcat.tar.gz.asc $TOMCAT_TGZ_URL.asc \
-    && gpg --batch --verify /tmp/tomcat.tar.gz.asc \
+    && gpg --batch --verify /tmp/tomcat.tar.gz.asc /tmp/tomcat.tar.gz \
     && tar -xvf /tmp/tomcat.tar.gz --strip-components=1 \
     && sed -i.bak \
         -e '/protocol="AJP/d' \
@@ -119,7 +119,7 @@ RUN export GNUPGHOME="$(mktemp -d)" \
     && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$CONVERTIGO_GPG_KEYS" \
     && curl -fSL -o /tmp/convertigo.war $CONVERTIGO_WAR_URL \
     && curl -fSL -o /tmp/convertigo.war.asc $CONVERTIGO_WAR_URL.asc \
-    && gpg --batch --verify /tmp/convertigo.war.asc \
+    && gpg --batch --verify /tmp/convertigo.war.asc /tmp/convertigo.war \
     && mkdir webapps/ROOT webapps/convertigo \
     && (cd webapps/convertigo \
         && unzip -q /tmp/convertigo.war \
