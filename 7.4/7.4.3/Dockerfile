@@ -38,17 +38,23 @@ RUN export GNUPGHOME="$(mktemp -d)" \
   && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
   && curl -o /usr/local/bin/gosu -fSL "https://github.com/tianon/gosu/releases/download/1.7/gosu-$(dpkg --print-architecture)" \
   && curl -o /usr/local/bin/gosu.asc -fSL "https://github.com/tianon/gosu/releases/download/1.7/gosu-$(dpkg --print-architecture).asc" \
-  && gpg --verify /usr/local/bin/gosu.asc \
+  && gpg --batch --verify /usr/local/bin/gosu.asc \
   && rm /usr/local/bin/gosu.asc \
   && chmod +x /usr/local/bin/gosu \
   && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 \
   && curl -o /usr/local/bin/tini -fSL "https://github.com/krallin/tini/releases/download/v0.9.0/tini" \
   && curl -o /usr/local/bin/tini.asc -fSL "https://github.com/krallin/tini/releases/download/v0.9.0/tini.asc" \
-  && gpg --verify /usr/local/bin/tini.asc \
+  && gpg --batch --verify /usr/local/bin/tini.asc \
   && rm /usr/local/bin/tini.asc \
   && chmod +x /usr/local/bin/tini \
   && rm -rf /tmp/*
 
+
+## create a 'convertigo' user and fix some rights
+
+RUN useradd -s /bin/false -m convertigo \
+    && mkdir -p /workspace/lib /workspace/classes \
+    && chown -R convertigo:convertigo /workspace
 
 ## download tomcat 7.0.72 because the 7.0.73 cause an annoying bug
 ## disable unused AJP, APR and Jasper features
@@ -64,9 +70,9 @@ RUN export GNUPGHOME="$(mktemp -d)" \
     && for key in $TOMCAT_GPG_KEYS; do \
          gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
        done; \
-    curl -SL -o /tmp/tomcat.tar.gz $TOMCAT_TGZ_URL \
-    && curl -SL -o /tmp/tomcat.tar.gz.asc $TOMCAT_TGZ_URL.asc \
-    && gpg --verify /tmp/tomcat.tar.gz.asc \
+    curl -fSL -o /tmp/tomcat.tar.gz $TOMCAT_TGZ_URL \
+    && curl -fSL -o /tmp/tomcat.tar.gz.asc $TOMCAT_TGZ_URL.asc \
+    && gpg --batch --verify /tmp/tomcat.tar.gz.asc \
     && tar -xvf /tmp/tomcat.tar.gz --strip-components=1 \
     && sed -i.bak \
         -e '/protocol="AJP/d' \
@@ -74,8 +80,9 @@ RUN export GNUPGHOME="$(mktemp -d)" \
         -e '/JasperListener/d' \
         -e 's/port="8080"/port="28080" maxThreads="64000"/' \
         conf/server.xml \
-    && rm -rf webapps/* bin/*.bat conf/server.xml.bak \
-    && rm -rf /tmp/*
+    && rm -rf webapps/* bin/*.bat conf/server.xml.bak /tmp/* \
+    && chown -R convertigo:convertigo conf temp work logs \
+    && chmod -w conf/*
 
 
 ENV CONVERTIGO_VERSION=7.4.3
@@ -91,29 +98,19 @@ ENV CONVERTIGO_GPG_KEYS 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F
 
 RUN export GNUPGHOME="$(mktemp -d)" \
     && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$CONVERTIGO_GPG_KEYS" \
-    && curl -SL -o /tmp/convertigo.war $CONVERTIGO_WAR_URL \
-    && curl -SL -o /tmp/convertigo.war.asc $CONVERTIGO_WAR_URL.asc \
-    && gpg --verify /tmp/convertigo.war.asc \
+    && curl -fSL -o /tmp/convertigo.war $CONVERTIGO_WAR_URL \
+    && curl -fSL -o /tmp/convertigo.war.asc $CONVERTIGO_WAR_URL.asc \
+    && gpg --batch --verify /tmp/convertigo.war.asc \
     && mkdir webapps/ROOT webapps/convertigo \
     && (cd webapps/convertigo \
         && unzip -q /tmp/convertigo.war \
-        && rm -rf WEB-INF/xulrunner WEB-INF/xvnc WEB-INF/lib/swt_*) \
-    && rm -rf /tmp/*
+        && rm -rf WEB-INF/xulrunner WEB-INF/xvnc WEB-INF/lib/swt_* /tmp/*)
 
 
 ## copy the ROOT index that redirect to the 'convertigo' webapps
 
 COPY ./web-connector/root-index.html webapps/ROOT/index.html
 COPY ./web-connector/docker-entrypoint.sh /
-
-
-## create a 'convertigo' user and fix some rights
-
-RUN chmod u+x /docker-entrypoint.sh \
-    && useradd -s /bin/false -m convertigo \
-    && mkdir -p /workspace/lib /workspace/classes \
-    && chown -R convertigo:convertigo conf temp work logs /workspace \
-    && chmod -w conf/*
 
 
 WORKDIR /workspace
