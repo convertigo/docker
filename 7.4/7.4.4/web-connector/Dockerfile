@@ -44,9 +44,18 @@ RUN dpkg --add-architecture i386 \
 ## install the latest openjdk:i386 for security fixes
 ## and remove the unnecessary openjdk:amd64
 
+ENV JAVA_DEBIAN_VERSION 8u121-b13-1~bpo8+1
+
+# see https://bugs.debian.org/775775
+# and https://github.com/docker-library/java/issues/19#issuecomment-70546872
+ENV CA_CERTIFICATES_JAVA_VERSION 20161107~bpo8+1
+
+
 RUN echo 'deb http://deb.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/jessie-backports.list \
     && apt-get update -y \
-    && apt-get install -y --no-install-recommends openjdk-8-jre-headless:i386 \
+    && apt-get install -y --no-install-recommends \
+        openjdk-8-jre-headless:i386="$JAVA_DEBIAN_VERSION" \
+        ca-certificates-java="$CA_CERTIFICATES_JAVA_VERSION" \
     && update-java-alternatives --jre-headless -s java-1.8.0-openjdk-i386 \
     && rm -rf /usr/lib/jvm/java-8-openjdk-amd64 /var/lib/apt/lists/*
 
