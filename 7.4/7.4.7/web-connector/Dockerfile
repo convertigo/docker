@@ -84,12 +84,11 @@ RUN useradd -s /bin/false -m convertigo \
     && chown -R convertigo:convertigo /workspace
 
 
-## download tomcat 7.0.72 because the 7.0.73 cause an annoying bug
 ## disable unused AJP, APR and Jasper features
 ## change HTTP port the historic Convertigo port 28080
 
 ENV TOMCAT_MAJOR=7
-ENV TOMCAT_VERSION=7.0.72
+ENV TOMCAT_VERSION=7.0.82
 
 ENV TOMCAT_TGZ_URL https://archive.apache.org/dist/tomcat/tomcat-$TOMCAT_MAJOR/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz
 
@@ -113,7 +112,7 @@ RUN export GNUPGHOME="$(mktemp -d)" \
     && chmod -w conf/*
 
 
-ENV CONVERTIGO_VERSION=7.4.6
+ENV CONVERTIGO_VERSION=7.4.7
 ENV CONVERTIGO_REVISION=43946
 
 ENV CONVERTIGO_WAR_URL https://devplatform.s3.amazonaws.com/refbin/cems/$CONVERTIGO_VERSION/convertigo-$CONVERTIGO_VERSION-v$CONVERTIGO_REVISION-linux32.war
