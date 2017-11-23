@@ -1,0 +1,33 @@
+version: 2
+jobs:
+  build:
+    docker:
+     - image: docker:latest
+    environment:
+     - C8O_VERSION: "7.4.7"
+    working_directory: /mnt
+    steps:
+     - checkout
+     - setup_remote_docker
+     - run:
+         name: Docker build
+         command: |
+             cd 7.4/$C8O_VERSION
+             docker build --rm=false -t convertigo/convertigo:latest .
+             cd web-connector
+             docker build --rm=false -t convertigo/convertigo:web-connector .
+             docker tag convertigo/convertigo:latest convertigo/convertigo:7.4
+             docker tag convertigo/convertigo:latest convertigo/convertigo:$C8O_VERSION
+             docker tag convertigo/convertigo:web-connector convertigo/convertigo:web-connector-7.4
+             docker tag convertigo/convertigo:web-connector convertigo/convertigo:web-connector-$C8O_VERSION
+             
+     - run:
+         name: Docker publish
+         command: |
+           docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+           docker push convertigo/convertigo:latest
+           docker push convertigo/convertigo:7.4
+           docker push convertigo/convertigo:$C8O_VERSION
+           docker push convertigo/convertigo:web-connector
+           docker push convertigo/convertigo:web-connector-7.4
+           docker push convertigo/convertigo:web-connector-$C8O_VERSION
