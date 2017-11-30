@@ -47,16 +47,27 @@ if [ "$1" = "convertigo" ]; then
     cp -r /workspace/classes/* $WEB_INF/classes/ 2>/dev/null
     
     
+    ## check and adapt the Java Xmx for limited devices
+    
+    JXMX=2048
+    java -Xmx${JXMX}m -version >/dev/null
+    while [ $? != 0 ] && [ $JXMX -gt 200 ]; do
+       JXMX=`expr $JXMX / 2 + $JXMX / 4`
+       java -Xmx${JXMX}m -version >/dev/null
+    done
+    
+    
     ## default common JAVA_OPTS, can be extended with "docker run -e JAVA_OPTS=-custom" 
     
     export JAVA_OPTS="\
         -Xms128m \
-        -Xmx2048m \
+        -Xmx${JXMX}m \
         -Xdebug \
         -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=n \
         -Dconvertigo.cems.user_workspace_path=/workspace \
         $JAVA_OPTS"
     
+    unset JXMX
     
     ## the web-connector version need can use an existing DISPLAY or declare one
     ## the mbaas version need to be headless and remove the DISPLAY variable

@@ -13,9 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see<http://www.gnu.org/licenses/>.
 
-## from openjdk instead of tomcat because
-## convertigo have an annoying bug with tomcat 7.0.43
-
 FROM tomcat:7.0.82-jre8
 
 
@@ -25,7 +22,8 @@ ENV CATALINA_HOME /usr/local/tomcat
 RUN mkdir -p "$CATALINA_HOME"
 WORKDIR $CATALINA_HOME
 
-RUN apt-get update -y && apt-get install -y --no-install-recommends \
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     unzip \
@@ -56,6 +54,10 @@ RUN useradd -s /bin/false -m convertigo \
     && mkdir -p /workspace/lib /workspace/classes \
     && chown -R convertigo:convertigo /workspace
 
+
+## disable unused AJP, APR and Jasper features
+## change HTTP port the historic Convertigo port 28080
+
 RUN sed -i.bak \
         -e '/protocol="AJP/d' \
         -e '/AprLifecycleListener/d' \
@@ -67,10 +69,10 @@ RUN sed -i.bak \
     && chmod -w conf/*
 
 
-ENV CONVERTIGO_VERSION=7.4.7
-ENV CONVERTIGO_REVISION=43946
+ENV CONVERTIGO_VERSION 7.4.7
+ENV CONVERTIGO_REVISION 43946
 
-ENV CONVERTIGO_WAR_URL https://devplatform.s3.amazonaws.com/refbin/cems/$CONVERTIGO_VERSION/convertigo-$CONVERTIGO_VERSION-v$CONVERTIGO_REVISION-linux64.war
+ENV CONVERTIGO_WAR_URL https://devplatform.s3.amazonaws.com/refbin/cems/$CONVERTIGO_VERSION/convertigo-$CONVERTIGO_VERSION-v$CONVERTIGO_REVISION-linux32.war
 
 ENV CONVERTIGO_GPG_KEYS 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F
 
