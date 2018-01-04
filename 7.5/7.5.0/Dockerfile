@@ -105,8 +105,8 @@ RUN export GNUPGHOME="$(mktemp -d)" \
 
 ## copy the ROOT index that redirect to the 'convertigo' webapps
 
-COPY ./i386/root-index.html webapps/ROOT/index.html
-COPY ./i386/docker-entrypoint.sh /
+COPY ./root-index.html webapps/ROOT/index.html
+COPY ./docker-entrypoint.sh /
 
 ## force SWT to use GTK2 instead of GTK3 (no Xulrunner support)
 

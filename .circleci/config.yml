@@ -1,13 +1,13 @@
 version: 2
 jobs:
   build:
-    docker:
-     - image: docker:latest
     environment:
      - C8O_VERSION: "7.5.0"
      - C8O_VERSION_MAJ: "7.5"
      - C8O_VERSION_PREV: "7.4.7"
      - C8O_VERSION_PREV_MAJ: "7.4"
+    docker:
+     - image: docker:latest
     working_directory: /mnt
     steps:
      - checkout
@@ -17,12 +17,14 @@ jobs:
          command: |
              cd $C8O_VERSION_MAJ/$C8O_VERSION
              docker build --rm=false -t convertigo/convertigo:latest .
-             cd i386
-             docker build --rm=false -t convertigo/convertigo:i386 .
              docker tag convertigo/convertigo:latest convertigo/convertigo:$C8O_VERSION_MAJ
              docker tag convertigo/convertigo:latest convertigo/convertigo:$C8O_VERSION
-             docker tag convertigo/convertigo:i386 convertigo/convertigo:i386-$C8O_VERSION_MAJ
-             docker tag convertigo/convertigo:i386 convertigo/convertigo:i386-$C8O_VERSION
+     - run:
+         name: Docker build previous
+         command: |
+             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV
+             docker build --rm=false -t convertigo/convertigo:$C8O_VERSION_PREV_MAJ .
+             docker tag convertigo/convertigo:$C8O_VERSION_PREV_MAJ convertigo/convertigo:$C8O_VERSION_PREV
      - run:
          name: Docker publish
          command: |
@@ -30,23 +32,47 @@ jobs:
            docker push convertigo/convertigo:latest
            docker push convertigo/convertigo:$C8O_VERSION_MAJ
            docker push convertigo/convertigo:$C8O_VERSION
+           docker push convertigo/convertigo:$C8O_VERSION_PREV_MAJ
+           docker push convertigo/convertigo:$C8O_VERSION_PREV
+  build_i386:
+    environment:
+     - C8O_VERSION: "7.5.0"
+     - C8O_VERSION_MAJ: "7.5"
+     - C8O_VERSION_PREV: "7.4.7"
+     - C8O_VERSION_PREV_MAJ: "7.4"
+    docker:
+     - image: docker:latest
+    working_directory: /mnt
+    steps:
+     - checkout
+     - setup_remote_docker
+     - run:
+         name: Docker build i386
+         command: |
+             cd $C8O_VERSION_MAJ/$C8O_VERSION
+             sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile
+             docker build --rm=false -t convertigo/convertigo:i386 .
+             docker tag convertigo/convertigo:i386 convertigo/convertigo:i386-$C8O_VERSION_MAJ
+             docker tag convertigo/convertigo:i386 convertigo/convertigo:i386-$C8O_VERSION
+     - run:
+         name: Docker build i386 previous
+         command: |
+             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV/i386
+             sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile
+             docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ .
+             docker tag convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ convertigo/convertigo:i386-$C8O_VERSION_PREV
+     - run:
+         name: Docker publish i386
+         command: |
+           docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
            docker push convertigo/convertigo:i386
            docker push convertigo/convertigo:i386-$C8O_VERSION_MAJ
            docker push convertigo/convertigo:i386-$C8O_VERSION
-     - run:
-         name: Docker build prev
-         command: |
-             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV
-             docker build --rm=false -t convertigo/convertigo:$C8O_VERSION_PREV_MAJ .
-             cd i386
-             docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ .
-             docker tag convertigo/convertigo:$C8O_VERSION_PREV_MAJ convertigo/convertigo:$C8O_VERSION_PREV
-             docker tag convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ convertigo/convertigo:i386-$C8O_VERSION_PREV
-     - run:
-         name: Docker publish
-         command: |
-           docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-           docker push convertigo/convertigo:$C8O_VERSION_PREV_MAJ
-           docker push convertigo/convertigo:$C8O_VERSION_PREV
            docker push convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ
            docker push convertigo/convertigo:i386-$C8O_VERSION_PREV
+workflows:
+  version: 2
+  build_and_build_prev:
+    jobs:
+      - build
+      - build_i386
