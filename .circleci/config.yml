@@ -57,7 +57,7 @@ jobs:
      - run:
          name: Docker build i386 previous
          command: |
-             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV/i386
+             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV
              sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile
              docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ .
              docker tag convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ convertigo/convertigo:i386-$C8O_VERSION_PREV
