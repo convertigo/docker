@@ -23,13 +23,14 @@ jobs:
              docker tag convertigo/convertigo:latest convertigo/convertigo:$C8O_VERSION
              docker tag convertigo/convertigo:i386 convertigo/convertigo:i386-$C8O_VERSION_MAJ
              docker tag convertigo/convertigo:i386 convertigo/convertigo:i386-$C8O_VERSION
-             
      - run:
          name: Docker publish
          command: |
            docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+           docker push convertigo/convertigo:latest
            docker push convertigo/convertigo:$C8O_VERSION_MAJ
            docker push convertigo/convertigo:$C8O_VERSION
+           docker push convertigo/convertigo:i386
            docker push convertigo/convertigo:i386-$C8O_VERSION_MAJ
            docker push convertigo/convertigo:i386-$C8O_VERSION
      - run:
@@ -41,7 +42,6 @@ jobs:
              docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ .
              docker tag convertigo/convertigo:$C8O_VERSION_PREV_MAJ convertigo/convertigo:$C8O_VERSION_PREV
              docker tag convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ convertigo/convertigo:i386-$C8O_VERSION_PREV
-             
      - run:
          name: Docker publish
          command: |
