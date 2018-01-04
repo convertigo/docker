@@ -1,4 +1,4 @@
-# Copyright (c) 2001-2017 Convertigo SA.
+# Copyright (c) 2001-2018 Convertigo SA.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Affero General Public License
@@ -27,6 +27,13 @@ RUN apt-get update -y \
     ca-certificates \
     curl \
     unzip \
+  && (test "$(dpkg --print-architecture)" = "i386" && apt-get install -y --no-install-recommends \
+    libgtk2.0-0 \
+    libstdc++6 \
+    libxft2 \
+    libxt6 \
+    libxtst6 \
+    || true) \
   && rm -rf /var/lib/apt/lists/*
 
 
@@ -98,14 +105,19 @@ RUN export GNUPGHOME="$(mktemp -d)" \
     && mkdir webapps/ROOT webapps/convertigo \
     && (cd webapps/convertigo \
         && unzip -q /tmp/convertigo.war \
-        && rm -rf WEB-INF/xulrunner WEB-INF/xvnc WEB-INF/lib/swt_* /tmp/*)
+        && chmod a+x WEB-INF/xvnc/* \
+        && (test "$(dpkg --print-architecture)" != "i386" && rm -rf WEB-INF/xulrunner WEB-INF/xvnc WEB-INF/lib/swt_* || true) \
+        && rm -rf /tmp/*)
 
 
 ## copy the ROOT index that redirect to the 'convertigo' webapps
 
-COPY ./web-connector/root-index.html webapps/ROOT/index.html
-COPY ./web-connector/docker-entrypoint.sh /
+COPY ./i386/root-index.html webapps/ROOT/index.html
+COPY ./i386/docker-entrypoint.sh /
 
+## force SWT to use GTK2 instead of GTK3 (no Xulrunner support)
+
+ENV SWT_GTK3 0
 
 WORKDIR /workspace
 VOLUME ["/workspace"]

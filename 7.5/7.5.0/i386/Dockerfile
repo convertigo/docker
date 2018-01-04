@@ -1,4 +1,4 @@
-# Copyright (c) 2001-2017 Convertigo SA.
+# Copyright (c) 2001-2018 Convertigo SA.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Affero General Public License
@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see<http://www.gnu.org/licenses/>.
 
-## the web-connector mode need a i386 openjdk
-
 FROM i386/tomcat:7.0.82-jre8
 
 
@@ -28,12 +26,14 @@ RUN apt-get update -y \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    unzip \
+  && (test "$(dpkg --print-architecture)" = "i386" && apt-get install -y --no-install-recommends \
     libgtk2.0-0 \
     libstdc++6 \
     libxft2 \
     libxt6 \
     libxtst6 \
-    unzip \
+    || true) \
   && rm -rf /var/lib/apt/lists/*
 
 
@@ -84,8 +84,8 @@ RUN sed -i.bak \
     && chmod -w conf/*
 
 
-ENV CONVERTIGO_VERSION 7.4.7
-ENV CONVERTIGO_REVISION 43946
+ENV CONVERTIGO_VERSION 7.5.0
+ENV CONVERTIGO_REVISION 44235
 
 ENV CONVERTIGO_WAR_URL https://devplatform.s3.amazonaws.com/refbin/cems/$CONVERTIGO_VERSION/convertigo-$CONVERTIGO_VERSION-v$CONVERTIGO_REVISION-linux32.war
 
@@ -93,6 +93,7 @@ ENV CONVERTIGO_GPG_KEYS 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F
 
 
 ## download and extract the convertigo webapps
+## and remove unnecessary components for the mbaas version
 
 RUN export GNUPGHOME="$(mktemp -d)" \
     && ( gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$CONVERTIGO_GPG_KEYS" \
@@ -104,8 +105,9 @@ RUN export GNUPGHOME="$(mktemp -d)" \
     && mkdir webapps/ROOT webapps/convertigo \
     && (cd webapps/convertigo \
         && unzip -q /tmp/convertigo.war \
-        && chmod a+x WEB-INF/xvnc/*) \
-    && rm -rf /tmp/*
+        && chmod a+x WEB-INF/xvnc/* \
+        && (test "$(dpkg --print-architecture)" != "i386" && rm -rf WEB-INF/xulrunner WEB-INF/xvnc WEB-INF/lib/swt_* || true) \
+        && rm -rf /tmp/*)
 
 
 ## copy the ROOT index that redirect to the 'convertigo' webapps
