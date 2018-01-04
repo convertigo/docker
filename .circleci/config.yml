@@ -17,7 +17,7 @@ jobs:
          command: |
              cd $C8O_VERSION_MAJ/$C8O_VERSION
              docker build --rm=false -t convertigo/convertigo:latest .
-             cd web-connector
+             cd i386
              docker build --rm=false -t convertigo/convertigo:i386 .
              docker tag convertigo/convertigo:latest convertigo/convertigo:$C8O_VERSION_MAJ
              docker tag convertigo/convertigo:latest convertigo/convertigo:$C8O_VERSION
@@ -37,7 +37,7 @@ jobs:
          command: |
              cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV
              docker build --rm=false -t convertigo/convertigo:$C8O_VERSION_PREV_MAJ .
-             cd web-connector
+             cd i386
              docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ .
              docker tag convertigo/convertigo:$C8O_VERSION_PREV_MAJ convertigo/convertigo:$C8O_VERSION_PREV
              docker tag convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ convertigo/convertigo:i386-$C8O_VERSION_PREV
