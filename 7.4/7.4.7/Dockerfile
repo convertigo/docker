@@ -27,13 +27,6 @@ RUN apt-get update -y \
     ca-certificates \
     curl \
     unzip \
-  && (test "$(dpkg --print-architecture)" = "i386" && apt-get install -y --no-install-recommends \
-    libgtk2.0-0 \
-    libstdc++6 \
-    libxft2 \
-    libxt6 \
-    libxtst6 \
-    || true) \
   && rm -rf /var/lib/apt/lists/*
 
 
