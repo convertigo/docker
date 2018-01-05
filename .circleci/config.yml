@@ -85,15 +85,15 @@ jobs:
      - run:
          name: Docker build alpine
          command: |
-             cd $C8O_VERSION_MAJ/$C8O_VERSION
-             docker build --rm=false -t convertigo/convertigo:$C8O_VERSION-alpine -f Dockerfile-alpine .
+             cd $C8O_VERSION_MAJ/$C8O_VERSION/alpine
+             docker build --rm=false -t convertigo/convertigo:$C8O_VERSION-alpine .
              docker tag convertigo/convertigo:$C8O_VERSION-alpine convertigo/convertigo:$C8O_VERSION_MAJ-alpine
              docker tag convertigo/convertigo:$C8O_VERSION-alpine convertigo/convertigo:alpine
      - run:
          name: Docker build alpine previous
          command: |
-             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV
-             docker build --rm=false -t convertigo/convertigo:$C8O_VERSION_PREV-alpine -f Dockerfile-alpine .
+             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV/alpine
+             docker build --rm=false -t convertigo/convertigo:$C8O_VERSION_PREV-alpine .
              docker tag convertigo/convertigo:$C8O_VERSION_PREV-alpine convertigo/convertigo:$C8O_VERSION_PREV_MAJ-alpine
      - run:
          name: Docker publish alpine
@@ -117,22 +117,22 @@ jobs:
      - checkout
      - setup_remote_docker
      - run:
-         name: Docker build i386
+         name: Docker build alpine i386
          command: |
-             cd $C8O_VERSION_MAJ/$C8O_VERSION
-             sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile-alpine
-             docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION-alpine -f Dockerfile-alpine .
+             cd $C8O_VERSION_MAJ/$C8O_VERSION/alpine
+             sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile
+             docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION-alpine .
              docker tag convertigo/convertigo:i386-$C8O_VERSION-alpine convertigo/convertigo:i386-$C8O_VERSION_MAJ-alpine
              docker tag convertigo/convertigo:i386-$C8O_VERSION-alpine convertigo/convertigo:i386-alpine
      - run:
-         name: Docker build i386 previous
+         name: Docker build alpine i386 previous
          command: |
-             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV
-             sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile-alpine
-             docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV-alpine -f Dockerfile-alpine .
+             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV/alpine
+             sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile
+             docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV-alpine .
              docker tag convertigo/convertigo:i386-$C8O_VERSION_PREV-alpine convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ-alpine
      - run:
-         name: Docker publish i386
+         name: Docker publish alpine i386
          command: |
            docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
            docker push convertigo/convertigo:i386-alpine
