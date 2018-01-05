@@ -104,7 +104,7 @@ RUN export GNUPGHOME="$(mktemp -d)" \
 ## copy the ROOT index that redirect to the 'convertigo' webapps
 
 COPY ./root-index.html webapps/ROOT/index.html
-COPY ./web-connector/docker-entrypoint.sh /
+COPY ./docker-entrypoint.sh /
 
 WORKDIR /workspace
 VOLUME ["/workspace"]
