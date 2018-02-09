@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see<http://www.gnu.org/licenses/>.
 
-FROM tomcat:7.0.82-jre8-alpine
+FROM tomcat:7-jre8-alpine
 
 
 MAINTAINER Nicolas Albert nicolasa@convertigo.com
