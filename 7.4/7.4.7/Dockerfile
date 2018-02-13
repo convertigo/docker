@@ -26,6 +26,8 @@ RUN apt-get update -y \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    dirmngr \
+    gnupg \
     unzip \
   && rm -rf /var/lib/apt/lists/*
 
