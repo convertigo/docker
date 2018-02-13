@@ -25,6 +25,7 @@ WORKDIR $CATALINA_HOME
 RUN apk --no-cache add \
     ca-certificates \
     curl \
+    gnupg \
     unzip
 
 ## grab gosu for easy step-down from root and tini for signal handling
