@@ -31,7 +31,7 @@ RUN apk --no-cache add \
 ## grab gosu for easy step-down from root and tini for signal handling
 ENV GOSU_VERSION 1.10
 ENV GOSU_GPG_KEYS B42F6819007F00F88E364FD4036A9C25BF357DD4
-ENV TINI_VERSION 0.16.1
+ENV TINI_VERSION 0.17.0
 ENV TINI_GPG_KEYS 6380DC428747F6C393FEACA59A84159D7001A4E5
 
 RUN export GNUPGHOME="$(mktemp -d)" \
@@ -51,6 +51,7 @@ RUN export GNUPGHOME="$(mktemp -d)" \
   && curl -o /usr/local/bin/tini -fSL "https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-static-${dpkgArch}" \
   && curl -o /usr/local/bin/tini.asc -fSL "https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-static-${dpkgArch}.asc" \
   && gpg --batch --verify /usr/local/bin/tini.asc /usr/local/bin/tini \
+  && pkill -9 gpg-agent \
   && rm /usr/local/bin/tini.asc \
   && chmod +x /usr/local/bin/tini \
   && rm -rf /tmp/* \
@@ -96,6 +97,7 @@ RUN export GNUPGHOME="$(mktemp -d)" \
     && curl -fSL -o /tmp/convertigo.war $CONVERTIGO_WAR_URL \
     && curl -fSL -o /tmp/convertigo.war.asc $CONVERTIGO_WAR_URL.asc \
     && gpg --batch --verify /tmp/convertigo.war.asc /tmp/convertigo.war \
+    && pkill -9 gpg-agent \
     && mkdir webapps/ROOT webapps/convertigo \
     && (cd webapps/convertigo \
         && unzip -q /tmp/convertigo.war \
