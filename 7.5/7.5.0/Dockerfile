@@ -41,6 +41,7 @@ ENV TINI_GPG_KEYS 6380DC428747F6C393FEACA59A84159D7001A4E5
 RUN export GNUPGHOME="$(mktemp -d)" \
   && ( gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$GOSU_GPG_KEYS" \
   || gpg --keyserver pgp.mit.edu --recv-keys "$GOSU_GPG_KEYS" \
+  || gpg --keyserver keyserver.ubuntu.com --recv-keys "$GOSU_GPG_KEYS" \
   || gpg --keyserver keyserver.pgp.com --recv-keys "$GOSU_GPG_KEYS" ) \
   && curl -o /usr/local/bin/gosu -fSL "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-$(dpkg --print-architecture)" \
   && curl -o /usr/local/bin/gosu.asc -fSL "https://github.com/tianon/gosu/releases/download/${GOSU_VERSION}/gosu-$(dpkg --print-architecture).asc" \
@@ -49,6 +50,7 @@ RUN export GNUPGHOME="$(mktemp -d)" \
   && chmod +x /usr/local/bin/gosu \
   && ( gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$TINI_GPG_KEYS" \
   || gpg --keyserver pgp.mit.edu --recv-keys "$TINI_GPG_KEYS" \
+  || gpg --keyserver keyserver.ubuntu.com --recv-keys "$TINI_GPG_KEYS" \
   || gpg --keyserver keyserver.pgp.com --recv-keys "$TINI_GPG_KEYS" ) \
   && curl -o /usr/local/bin/tini -fSL "https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-$(dpkg --print-architecture)" \
   && curl -o /usr/local/bin/tini.asc -fSL "https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini-$(dpkg --print-architecture).asc" \
@@ -93,6 +95,7 @@ ENV CONVERTIGO_GPG_KEYS 6A7779BB78FE368DF74B708FD4DA8FBEB64BF75F
 RUN export GNUPGHOME="$(mktemp -d)" \
     && ( gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$CONVERTIGO_GPG_KEYS" \
     || gpg --keyserver pgp.mit.edu --recv-keys "$CONVERTIGO_GPG_KEYS" \
+    || gpg --keyserver keyserver.ubuntu.com --recv-keys "$CONVERTIGO_GPG_KEYS" \
     || gpg --keyserver keyserver.pgp.com --recv-keys "$CONVERTIGO_GPG_KEYS" ) \
     && curl -fSL -o /tmp/convertigo.war $CONVERTIGO_WAR_URL \
     && curl -fSL -o /tmp/convertigo.war.asc $CONVERTIGO_WAR_URL.asc \
