@@ -4,7 +4,7 @@ jobs:
     environment:
      - C8O_VERSION: "7.5.0"
      - C8O_VERSION_MAJ: "7.5"
-     - C8O_VERSION_PREV: "7.4.7"
+     - C8O_VERSION_PREV: "7.4.8"
      - C8O_VERSION_PREV_MAJ: "7.4"
     docker:
      - image: docker:latest
@@ -38,7 +38,7 @@ jobs:
     environment:
      - C8O_VERSION: "7.5.0"
      - C8O_VERSION_MAJ: "7.5"
-     - C8O_VERSION_PREV: "7.4.7"
+     - C8O_VERSION_PREV: "7.4.8"
      - C8O_VERSION_PREV_MAJ: "7.4"
     docker:
      - image: docker:latest
@@ -74,7 +74,7 @@ jobs:
     environment:
      - C8O_VERSION: "7.5.0"
      - C8O_VERSION_MAJ: "7.5"
-     - C8O_VERSION_PREV: "7.4.7"
+     - C8O_VERSION_PREV: "7.4.8"
      - C8O_VERSION_PREV_MAJ: "7.4"
     docker:
      - image: docker:latest
@@ -108,7 +108,7 @@ jobs:
     environment:
      - C8O_VERSION: "7.5.0"
      - C8O_VERSION_MAJ: "7.5"
-     - C8O_VERSION_PREV: "7.4.7"
+     - C8O_VERSION_PREV: "7.4.8"
      - C8O_VERSION_PREV_MAJ: "7.4"
     docker:
      - image: docker:latest
