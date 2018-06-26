@@ -71,7 +71,10 @@ ENV TOMCAT_TGZ_URL https://archive.apache.org/dist/tomcat/tomcat-$TOMCAT_MAJOR/v
 ENV TOMCAT_GPG_KEYS 05AB33110949707C93A279E3D3EFE6B686867BA6 07E48665A34DCAFAE522E5E6266191C37C037D42 47309207D818FFD8DCD3F83F1931D684307A10A5 541FBE7D8F78B25E055DDEE13C370389288584E7 61B832AC2F1C5A90F0F9B00A1C506407564C17A3 713DA88BE50911535FE716F5208B0AB1D63011C7 79F7026C690BAA50B92CD8B66A3AD3F4F22C4FED 9BA44C2621385CB966EBA586F72C284D731FABEE A27677289986DB50844682F8ACB77FC2E86E29AC A9C5DF4D22E99998D9875A5110C01C5A2F6059E7 DCFD35E0BF8CA7344752DE8B6FB21E8933C60243 F3A04C595DB5B6A5F1ECA43E3B7BBB100D811BBE F7DA48BB64BCB84ECBA7EE6935CD23C10D498E23
 RUN export GNUPGHOME="$(mktemp -d)" \
     && for key in $TOMCAT_GPG_KEYS; do \
-         gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
+         ( gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key" \
+           || gpg --keyserver pgp.mit.edu --recv-keys "$key" \
+           || gpg --keyserver keyserver.ubuntu.com --recv-keys "$key" \
+           || gpg --keyserver keyserver.pgp.com --recv-keys "$key" ) \
        done; \
     curl -fSL -o /tmp/tomcat.tar.gz $TOMCAT_TGZ_URL \
     && curl -fSL -o /tmp/tomcat.tar.gz.asc $TOMCAT_TGZ_URL.asc \
@@ -94,6 +97,7 @@ RUN sed -i.bak \
         -e '/JasperListener/d' \
         -e 's/port="8080"/port="28080" maxThreads="64000"/' \
         conf/server.xml \
+    && echo "org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true" >> conf/catalina.properties \
     && rm -rf webapps/* bin/*.bat conf/server.xml.bak /tmp/* \
     && chown -R convertigo:convertigo conf temp work logs \
     && chmod -w conf/*
