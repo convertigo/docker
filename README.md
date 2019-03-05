@@ -23,11 +23,11 @@ You can access the Server admin console on http://[dockerhost]:28080/convertigo 
 
 ## Link Convertigo to a CouchDB database for FullSync (Convertigo EE only)
 
-Convertigo MBaaS FullSync module uses Apache CouchDB 1.6.1 as NoSQL repository. You can use the **[couchdb](https://hub.docker.com/_/couchdb/)** docker image and link to it convertigo this way
+Convertigo MBaaS FullSync module uses Apache CouchDB 2.3.0 as NoSQL repository. You can use the **[couchdb](https://hub.docker.com/_/couchdb/)** docker image and link to it convertigo this way
 
 Launch CouchDB container and name it 'fullsync'
 
-	docker run -d --name fullsync couchdb:1.6.1
+	$ docker run -d --name fullsync couchdb:2.3.0
 
 Then launch Convertigo and link it to the running 'fullsync' container. Convertigo MBaaS sever will automatically use it as its fullsync repository.
 
