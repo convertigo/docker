@@ -4,8 +4,6 @@ jobs:
     environment:
      - C8O_VERSION: "7.5.7"
      - C8O_VERSION_MAJ: "7.5"
-     - C8O_VERSION_PREV: "7.4.8"
-     - C8O_VERSION_PREV_MAJ: "7.4"
     docker:
      - image: docker:latest
     working_directory: /mnt
@@ -19,12 +17,6 @@ jobs:
              docker build --pull --rm=false -t convertigo/convertigo:$C8O_VERSION .
              docker tag convertigo/convertigo:$C8O_VERSION convertigo/convertigo:$C8O_VERSION_MAJ
              docker tag convertigo/convertigo:$C8O_VERSION convertigo/convertigo:latest
-#     - run:
-#         name: Docker build previous
-#         command: |
-#             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV
-#             docker build --rm=false -t convertigo/convertigo:$C8O_VERSION_PREV .
-#             docker tag convertigo/convertigo:$C8O_VERSION_PREV convertigo/convertigo:$C8O_VERSION_PREV_MAJ
      - run:
          name: Docker publish
          command: |
@@ -32,14 +24,10 @@ jobs:
            docker push convertigo/convertigo:latest
            docker push convertigo/convertigo:$C8O_VERSION_MAJ
            docker push convertigo/convertigo:$C8O_VERSION
-#           docker push convertigo/convertigo:$C8O_VERSION_PREV_MAJ
-#           docker push convertigo/convertigo:$C8O_VERSION_PREV
   build_i386:
     environment:
      - C8O_VERSION: "7.5.7"
      - C8O_VERSION_MAJ: "7.5"
-     - C8O_VERSION_PREV: "7.4.8"
-     - C8O_VERSION_PREV_MAJ: "7.4"
     docker:
      - image: docker:latest
     working_directory: /mnt
@@ -54,13 +42,6 @@ jobs:
              docker build --pull --rm=false -t convertigo/convertigo:i386-$C8O_VERSION .
              docker tag convertigo/convertigo:i386-$C8O_VERSION convertigo/convertigo:i386-$C8O_VERSION_MAJ
              docker tag convertigo/convertigo:i386-$C8O_VERSION convertigo/convertigo:i386
-#     - run:
-#         name: Docker build i386 previous
-#         command: |
-#             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV
-#             sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile
-#             docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV .
-#             docker tag convertigo/convertigo:i386-$C8O_VERSION_PREV convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ
      - run:
          name: Docker publish i386
          command: |
@@ -68,14 +49,10 @@ jobs:
            docker push convertigo/convertigo:i386
            docker push convertigo/convertigo:i386-$C8O_VERSION_MAJ
            docker push convertigo/convertigo:i386-$C8O_VERSION
-#           docker push convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ
-#           docker push convertigo/convertigo:i386-$C8O_VERSION_PREV
-  build_alpine:
+  build_slim:
     environment:
      - C8O_VERSION: "7.5.7"
      - C8O_VERSION_MAJ: "7.5"
-     - C8O_VERSION_PREV: "7.4.8"
-     - C8O_VERSION_PREV_MAJ: "7.4"
     docker:
      - image: docker:latest
     working_directory: /mnt
@@ -83,33 +60,23 @@ jobs:
      - checkout
      - setup_remote_docker
      - run:
-         name: Docker build alpine
+         name: Docker build slim
          command: |
-             cd $C8O_VERSION_MAJ/$C8O_VERSION/alpine
-             docker build --pull --rm=false -t convertigo/convertigo:$C8O_VERSION-alpine .
-             docker tag convertigo/convertigo:$C8O_VERSION-alpine convertigo/convertigo:$C8O_VERSION_MAJ-alpine
-             docker tag convertigo/convertigo:$C8O_VERSION-alpine convertigo/convertigo:alpine
-#     - run:
-#         name: Docker build alpine previous
-#         command: |
-#             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV/alpine
-#             docker build --rm=false -t convertigo/convertigo:$C8O_VERSION_PREV-alpine .
-#             docker tag convertigo/convertigo:$C8O_VERSION_PREV-alpine convertigo/convertigo:$C8O_VERSION_PREV_MAJ-alpine
+             cd $C8O_VERSION_MAJ/$C8O_VERSION/slim
+             docker build --pull --rm=false -t convertigo/convertigo:$C8O_VERSION-slim .
+             docker tag convertigo/convertigo:$C8O_VERSION-slim convertigo/convertigo:$C8O_VERSION_MAJ-slim
+             docker tag convertigo/convertigo:$C8O_VERSION-slim convertigo/convertigo:slim
      - run:
-         name: Docker publish alpine
+         name: Docker publish slim
          command: |
            echo "$DOCKER_PASSWORD" | docker login -u="$DOCKER_USERNAME" --password-stdin
-           docker push convertigo/convertigo:alpine
-           docker push convertigo/convertigo:$C8O_VERSION_MAJ-alpine
-           docker push convertigo/convertigo:$C8O_VERSION-alpine
-#           docker push convertigo/convertigo:$C8O_VERSION_PREV_MAJ-alpine
-#           docker push convertigo/convertigo:$C8O_VERSION_PREV-alpine
-  build_alpine_i386:
+           docker push convertigo/convertigo:slim
+           docker push convertigo/convertigo:$C8O_VERSION_MAJ-slim
+           docker push convertigo/convertigo:$C8O_VERSION-slim
+  build_slim_i386:
     environment:
      - C8O_VERSION: "7.5.7"
      - C8O_VERSION_MAJ: "7.5"
-     - C8O_VERSION_PREV: "7.4.8"
-     - C8O_VERSION_PREV_MAJ: "7.4"
     docker:
      - image: docker:latest
     working_directory: /mnt
@@ -117,34 +84,23 @@ jobs:
      - checkout
      - setup_remote_docker
      - run:
-         name: Docker build alpine i386
+         name: Docker build slim i386
          command: |
-             cd $C8O_VERSION_MAJ/$C8O_VERSION/alpine
+             cd $C8O_VERSION_MAJ/$C8O_VERSION/slim
              sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile
-             docker build --pull --rm=false -t convertigo/convertigo:i386-$C8O_VERSION-alpine .
-             docker tag convertigo/convertigo:i386-$C8O_VERSION-alpine convertigo/convertigo:i386-$C8O_VERSION_MAJ-alpine
-             docker tag convertigo/convertigo:i386-$C8O_VERSION-alpine convertigo/convertigo:i386-alpine
-#     - run:
-#         name: Docker build alpine i386 previous
-#         command: |
-#             cd $C8O_VERSION_PREV_MAJ/$C8O_VERSION_PREV/alpine
-#             sed "s,FROM tomcat,FROM i386/tomcat," -i Dockerfile
-#             docker build --rm=false -t convertigo/convertigo:i386-$C8O_VERSION_PREV-alpine .
-#             docker tag convertigo/convertigo:i386-$C8O_VERSION_PREV-alpine convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ-alpine
+             docker build --pull --rm=false -t convertigo/convertigo:i386-$C8O_VERSION-slim .
+             docker tag convertigo/convertigo:i386-$C8O_VERSION-slim convertigo/convertigo:i386-$C8O_VERSION_MAJ-slim
+             docker tag convertigo/convertigo:i386-$C8O_VERSION-slim convertigo/convertigo:i386-slim
      - run:
-         name: Docker publish alpine i386
+         name: Docker publish slim i386
          command: |
            echo "$DOCKER_PASSWORD" | docker login -u="$DOCKER_USERNAME" --password-stdin
-           docker push convertigo/convertigo:i386-alpine
-           docker push convertigo/convertigo:i386-$C8O_VERSION_MAJ-alpine
-           docker push convertigo/convertigo:i386-$C8O_VERSION-alpine
-#           docker push convertigo/convertigo:i386-$C8O_VERSION_PREV_MAJ-alpine
-#           docker push convertigo/convertigo:i386-$C8O_VERSION_PREV-alpine
+           docker push convertigo/convertigo:i386-slim
+           docker push convertigo/convertigo:i386-$C8O_VERSION_MAJ-slim
+           docker push convertigo/convertigo:i386-$C8O_VERSION-slim
 workflows:
   version: 2
-  build_and_build_prev:
+  build:
     jobs:
       - build
-      - build_i386
-      - build_alpine
-      - build_alpine_i386
+      - build_slim

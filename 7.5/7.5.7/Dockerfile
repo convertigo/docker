@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see<http://www.gnu.org/licenses/>.
 
-FROM tomcat:7-jre8
+FROM tomcat:7-jdk8
 
 
 MAINTAINER Nicolas Albert nicolasa@convertigo.com
@@ -110,8 +110,8 @@ RUN export GNUPGHOME="$(mktemp -d)" \
 
 ## copy the ROOT index that redirect to the 'convertigo' webapps
 
-COPY ./alpine/root-index.html webapps/ROOT/index.html
-COPY ./alpine/docker-entrypoint.sh /
+COPY ./slim/root-index.html webapps/ROOT/index.html
+COPY ./slim/docker-entrypoint.sh /
 
 ## force SWT to use GTK2 instead of GTK3 (no Xulrunner support)
 
