@@ -76,7 +76,10 @@ RUN sed -i.bak \
         -e '/JasperListener/d' \
         -e 's/port="8080"/port="28080" maxThreads="64000" relaxedQueryChars="{}[]|"/' \
         conf/server.xml \
-    && rm -rf webapps/* bin/*.bat conf/server.xml.bak /tmp/* \
+    && sed -i.bak \
+        -e 's,<Context>,<Context sessionCookiePath="/">,' \
+        conf/context.xml \
+    && rm -rf webapps/* bin/*.bat conf/*.bak /tmp/* \
     && chown -R convertigo:convertigo conf temp work logs \
     && chmod -w conf/*
 
