@@ -1,2 +1,4 @@
 /.project
 /.settings/
+/compose/mbaas/*
+!/compose/mbaas/docker-compose.yml

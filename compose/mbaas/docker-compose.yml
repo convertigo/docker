@@ -1,40 +1,130 @@
-version: "2"
+name: convertigo
+
 services:
-    convertigo:
-        image: "convertigo"
-        ports:
-         - "28080:28080"
-        links:
-         - couchdb
-         - mysql
-        volumes:
-         - workspace:/workspace
-        environment:
-         - JAVA_OPTS=
-           -Dconvertigo.engine.billing.enabled=true 
-           -Dconvertigo.engine.billing.persistence.jdbc.username=c8oAnalytics
-           -Dconvertigo.engine.billing.persistence.jdbc.password=c8oAnalytics
-           -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/c8oAnalytics
-           -Dconvertigo.engine.fullsync.couch.username=admin
-           -Dconvertigo.engine.fullsync.couch.password=fullsyncpassword
-    couchdb:
-        image: "couchdb:2.3.1"
-        ports:
-         - "28081:5984"
-        environment:
-         - COUCHDB_USER=admin
-         - COUCHDB_PASSWORD=fullsyncpassword
-    mysql:
-        image: "mysql"
-        ports:
-         - "28082:3306"
-        volumes:
-         - analytics:/var/lib/mysql
-        environment:
-         - MYSQL_RANDOM_ROOT_PASSWORD=yes
-         - MYSQL_DATABASE=c8oAnalytics
-         - MYSQL_USER=c8oAnalytics
-         - MYSQL_PASSWORD=c8oAnalytics
-volumes:
-    workspace: {}
-    analytics: {}
+  convertigo_0:
+    image: "convertigo:latest"
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+    ports:
+     - "28080:28080"
+    volumes:
+     - ./workspace:/workspace
+    environment:
+     - JAVA_OPTS=
+       -Dconvertigo.engine.log4j.appender.CemsAppender.File=/workspace/logs/0/engine.log
+       -Dconvertigo.engine.billing.enabled=true 
+       -Dconvertigo.engine.billing.persistence.jdbc.username=c8oAnalytics
+       -Dconvertigo.engine.billing.persistence.jdbc.password=c8oAnalytics
+       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/c8oAnalytics
+       -Dconvertigo.engine.fullsync.couch.username=admin
+       -Dconvertigo.engine.fullsync.couch.password=fullsyncpassword
+    command: >
+      /bin/sh -c "chown convertigo:convertigo /workspace
+        /docker-entrypoint.sh convertigo"
+
+  convertigo_1:
+    image: "convertigo:latest"
+    restart: unless-stopped
+    deploy:
+      replicas: 0
+    ports:
+     - "28081:28080"
+    volumes:
+     - ./workspace:/workspace
+    depends_on:
+      - convertigo_0
+    environment:
+     - JAVA_OPTS=
+       -Dconvertigo.engine.log4j.appender.CemsAppender.File=/workspace/logs/1/engine.log
+       -Dconvertigo.engine.billing.enabled=true 
+       -Dconvertigo.engine.billing.persistence.jdbc.username=c8oAnalytics
+       -Dconvertigo.engine.billing.persistence.jdbc.password=c8oAnalytics
+       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/c8oAnalytics
+       -Dconvertigo.engine.fullsync.couch.username=admin
+       -Dconvertigo.engine.fullsync.couch.password=fullsyncpassword
+
+  couchdb:
+    image: "couchdb:3.4.2"
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+    ports:
+     - "28090:5984"
+    environment:
+     - COUCHDB_USER=admin
+     - COUCHDB_PASSWORD=fullsyncpassword
+    volumes:
+     - ./fullsync:/opt/couchdb/data
+    command: >
+      /bin/sh -c "echo '[couchdb]
+        single_node=true' > /opt/couchdb/etc/local.d/setup.ini
+        /docker-entrypoint.sh couchdb"
+
+  mysql:
+    image: "mysql"
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+    ports:
+     - "28092:3306"
+    volumes:
+     - ./analytics:/var/lib/mysql
+    environment:
+     - MYSQL_RANDOM_ROOT_PASSWORD=yes
+     - MYSQL_DATABASE=c8oAnalytics
+     - MYSQL_USER=c8oAnalytics
+     - MYSQL_PASSWORD=c8oAnalytics
+
+  httpd:
+    image: httpd:latest
+    restart: unless-stopped
+    deploy:
+      replicas: 0
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "./certs:/usr/local/apache2/conf/certs:ro"
+    depends_on:
+      - convertigo_0
+    command: >
+      /bin/sh -c "echo '
+        LoadModule proxy_module modules/mod_proxy.so
+        LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+        LoadModule proxy_http_module modules/mod_proxy_http.so
+        LoadModule ssl_module modules/mod_ssl.so
+        LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
+        LoadModule lbmethod_byrequests_module modules/mod_lbmethod_byrequests.so
+        <IfFile /usr/local/apache2/conf/certs/fullchain.pem>
+          Listen 443
+          <VirtualHost *:443>
+            ServerName yourdomain.com
+            SSLEngine on
+            SSLCertificateFile /usr/local/apache2/conf/certs/fullchain.pem
+            SSLCertificateKeyFile /usr/local/apache2/conf/certs/privkey.pem
+            <Proxy \"balancer://convertigo_cluster\">
+              BalancerMember http://convertigo_0:28080 route=0
+              BalancerMember http://convertigo_1:28080 route=1
+              ProxySet stickysession=ROUTEID
+            </Proxy>
+            ProxyPass \"/\" \"balancer://convertigo_cluster/\"
+            ProxyPassReverse \"/\" \"balancer://convertigo_cluster/\"
+            Header add Set-Cookie \"ROUTEID=.%{BALANCER_WORKER_ROUTE}e; Path=/; HttpOnly\" env=BALANCER_ROUTE_CHANGED
+            ProxyPreserveHost On
+          </VirtualHost>
+        </IfFile>
+        <VirtualHost *:80>
+          ServerName yourdomain.com
+          #Redirect permanent / https://yourdomain.com/
+          <Proxy \"balancer://convertigo_cluster\">
+            BalancerMember http://convertigo_0:28080 route=0
+            BalancerMember http://convertigo_1:28080 route=1
+            ProxySet stickysession=ROUTEID
+          </Proxy>
+          ProxyPass \"/\" \"balancer://convertigo_cluster/\"
+          ProxyPassReverse \"/\" \"balancer://convertigo_cluster/\"
+          Header add Set-Cookie \"ROUTEID=.%{BALANCER_WORKER_ROUTE}e; Path=/; HttpOnly\" env=BALANCER_ROUTE_CHANGED
+          ProxyPreserveHost On
+        </VirtualHost>
+      ' >> /usr/local/apache2/conf/httpd.conf && cat /usr/local/apache2/conf/httpd.conf && httpd-foreground"
