@@ -127,4 +127,4 @@ services:
           Header add Set-Cookie \"ROUTEID=.%{BALANCER_WORKER_ROUTE}e; Path=/; HttpOnly\" env=BALANCER_ROUTE_CHANGED
           ProxyPreserveHost On
         </VirtualHost>
-      ' >> /usr/local/apache2/conf/httpd.conf && cat /usr/local/apache2/conf/httpd.conf && httpd-foreground"
+      ' >> /usr/local/apache2/conf/httpd.conf && httpd-foreground"
