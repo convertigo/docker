@@ -89,7 +89,9 @@ services:
     depends_on:
       - convertigo_0
     command: >
-      /bin/sh -c "echo '
+      /bin/sh -c "
+        if ! grep -q 'fullchain.pem' /usr/local/apache2/conf/httpd.conf; then
+        echo '
         LoadModule proxy_module modules/mod_proxy.so
         LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
         LoadModule proxy_http_module modules/mod_proxy_http.so
@@ -127,4 +129,6 @@ services:
           Header add Set-Cookie \"ROUTEID=.%{BALANCER_WORKER_ROUTE}e; Path=/; HttpOnly\" env=BALANCER_ROUTE_CHANGED
           ProxyPreserveHost On
         </VirtualHost>
-      ' >> /usr/local/apache2/conf/httpd.conf && httpd-foreground"
+        ' >> /usr/local/apache2/conf/httpd.conf
+        fi
+        httpd-foreground"
