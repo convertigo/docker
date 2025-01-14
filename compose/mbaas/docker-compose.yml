@@ -1,9 +1,12 @@
+# please also retrieve the .env file
+# https://github.com/convertigo/docker/raw/refs/heads/master/compose/mbaas/.env
+
 name: convertigo
 
 services:
   convertigo_0:
-    image: "convertigo:latest"
-    restart: unless-stopped
+    image: "${CONVERTIGO_IMAGE}"
+    restart: ${RESTART_POLICY}
     deploy:
       replicas: 1
     ports:
@@ -13,21 +16,21 @@ services:
     environment:
      - JAVA_OPTS=
        -Dconvertigo.engine.log4j.appender.CemsAppender.File=/workspace/logs/0/engine.log
-       -Dconvertigo.engine.billing.enabled=true 
-       -Dconvertigo.engine.billing.persistence.jdbc.username=c8oAnalytics
-       -Dconvertigo.engine.billing.persistence.jdbc.password=c8oAnalytics
-       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/c8oAnalytics
-       -Dconvertigo.engine.fullsync.couch.username=admin
-       -Dconvertigo.engine.fullsync.couch.password=fullsyncpassword
+       -Dconvertigo.engine.billing.enabled=true
+       -Dconvertigo.engine.billing.persistence.jdbc.username=${CONVERTIGO_BILLING_USER}
+       -Dconvertigo.engine.billing.persistence.jdbc.password=${CONVERTIGO_BILLING_PASSWORD}
+       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/${CONVERTIGO_BILLING_DB}?useSSL=false&allowPublicKeyRetrieval=true
+       -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
+       -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
     command: >
       /bin/sh -c "chown convertigo:convertigo /workspace
         /docker-entrypoint.sh convertigo"
 
   convertigo_1:
-    image: "convertigo:latest"
-    restart: unless-stopped
+    image: "${CONVERTIGO_IMAGE}"
+    restart: ${RESTART_POLICY}
     deploy:
-      replicas: 0
+      replicas: ${CONVERTIGO_MULTI_ENABLE}
     ports:
      - "28081:28080"
     volumes:
@@ -37,23 +40,23 @@ services:
     environment:
      - JAVA_OPTS=
        -Dconvertigo.engine.log4j.appender.CemsAppender.File=/workspace/logs/1/engine.log
-       -Dconvertigo.engine.billing.enabled=true 
-       -Dconvertigo.engine.billing.persistence.jdbc.username=c8oAnalytics
-       -Dconvertigo.engine.billing.persistence.jdbc.password=c8oAnalytics
-       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/c8oAnalytics
-       -Dconvertigo.engine.fullsync.couch.username=admin
-       -Dconvertigo.engine.fullsync.couch.password=fullsyncpassword
+       -Dconvertigo.engine.billing.enabled=true
+       -Dconvertigo.engine.billing.persistence.jdbc.username=${CONVERTIGO_BILLING_USER}
+       -Dconvertigo.engine.billing.persistence.jdbc.password=${CONVERTIGO_BILLING_PASSWORD}
+       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/{CONVERTIGO_BILLING_DB}?useSSL=false&allowPublicKeyRetrieval=true
+       -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
+       -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
 
   couchdb:
-    image: "couchdb:3.4.2"
-    restart: unless-stopped
+    image: "${COUCHDB_IMAGE}"
+    restart: ${RESTART_POLICY}
     deploy:
-      replicas: 1
+      replicas: ${COUCHDB_ENABLE}
     ports:
      - "28090:5984"
     environment:
-     - COUCHDB_USER=admin
-     - COUCHDB_PASSWORD=fullsyncpassword
+     - COUCHDB_USER=${CONVERTIGO_FULLSYNC_USER}
+     - COUCHDB_PASSWORD=${CONVERTIGO_FULLSYNC_PASSWORD}
     volumes:
      - ./fullsync:/opt/couchdb/data
     command: >
@@ -62,28 +65,28 @@ services:
         /docker-entrypoint.sh couchdb"
 
   mysql:
-    image: "mysql"
-    restart: unless-stopped
+    image: "${MYSQL_IMAGE}"
+    restart: ${RESTART_POLICY}
     deploy:
-      replicas: 1
+      replicas: ${MYSQL_ENABLE}
     ports:
      - "28092:3306"
     volumes:
      - ./analytics:/var/lib/mysql
     environment:
      - MYSQL_RANDOM_ROOT_PASSWORD=yes
-     - MYSQL_DATABASE=c8oAnalytics
-     - MYSQL_USER=c8oAnalytics
-     - MYSQL_PASSWORD=c8oAnalytics
+     - MYSQL_DATABASE=${CONVERTIGO_BILLING_DB}
+     - MYSQL_USER=${CONVERTIGO_BILLING_USER}
+     - MYSQL_PASSWORD=${CONVERTIGO_BILLING_PASSWORD}
 
   httpd:
-    image: httpd:latest
-    restart: unless-stopped
+    image: "${HTTPD_IMAGE}"
+    restart: ${RESTART_POLICY}
     deploy:
-      replicas: 0
+      replicas: ${HTTPD_ENABLE}
     ports:
-      - "80:80"
-      - "443:443"
+      - "${HTTPD_HTTP_PORT}:80"
+      - "${HTTPD_HTTPS_PORT}:443"
     volumes:
       - "./certs:/usr/local/apache2/conf/certs:ro"
     depends_on:
@@ -95,13 +98,14 @@ services:
         LoadModule proxy_module modules/mod_proxy.so
         LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
         LoadModule proxy_http_module modules/mod_proxy_http.so
+        LoadModule proxy_wstunnel_module modules/mod_proxy_wstunnel.so
         LoadModule ssl_module modules/mod_ssl.so
         LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
         LoadModule lbmethod_byrequests_module modules/mod_lbmethod_byrequests.so
         <IfFile /usr/local/apache2/conf/certs/fullchain.pem>
           Listen 443
           <VirtualHost *:443>
-            ServerName yourdomain.com
+            ServerName ${PUBLIC_HOSTNAME}
             SSLEngine on
             SSLCertificateFile /usr/local/apache2/conf/certs/fullchain.pem
             SSLCertificateKeyFile /usr/local/apache2/conf/certs/privkey.pem
@@ -112,23 +116,48 @@ services:
             </Proxy>
             ProxyPass \"/\" \"balancer://convertigo_cluster/\"
             ProxyPassReverse \"/\" \"balancer://convertigo_cluster/\"
+            ProxyPass \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
+            ProxyPassReverse \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
+            ProxyPass \"/ws/\" \"ws://baserow/ws/\"
+            ProxyPass \"/\" \"http://baserow/\"
+            ProxyPassReverse \"/\" \"http://baserow/\"
+
             Header add Set-Cookie \"ROUTEID=.%{BALANCER_WORKER_ROUTE}e; Path=/; HttpOnly\" env=BALANCER_ROUTE_CHANGED
             ProxyPreserveHost On
           </VirtualHost>
         </IfFile>
         <VirtualHost *:80>
-          ServerName yourdomain.com
-          #Redirect permanent / https://yourdomain.com/
+          ServerName ${PUBLIC_HOSTNAME}
+          #Redirect permanent / https://${PUBLIC_HOSTNAME}/
           <Proxy \"balancer://convertigo_cluster\">
-            BalancerMember http://convertigo_0:28080 route=0
-            BalancerMember http://convertigo_1:28080 route=1
+            BalancerMember http://convertigo_0:28080/convertigo route=0
+            BalancerMember http://convertigo_1:28080/convertigo route=1
             ProxySet stickysession=ROUTEID
           </Proxy>
-          ProxyPass \"/\" \"balancer://convertigo_cluster/\"
-          ProxyPassReverse \"/\" \"balancer://convertigo_cluster/\"
+          ProxyPass \"/convertigo\" \"balancer://convertigo_cluster/\"
+          ProxyPassReverse \"/convertigo\" \"balancer://convertigo_cluster/\"
+          ProxyPass \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
+          ProxyPassReverse \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
+          ProxyPass \"/ws/\" \"ws://baserow/ws/\"
+          ProxyPass \"/\" \"http://baserow/\"
+          ProxyPassReverse \"/\" \"http://baserow/\"
+          
           Header add Set-Cookie \"ROUTEID=.%{BALANCER_WORKER_ROUTE}e; Path=/; HttpOnly\" env=BALANCER_ROUTE_CHANGED
           ProxyPreserveHost On
         </VirtualHost>
         ' >> /usr/local/apache2/conf/httpd.conf
         fi
         httpd-foreground"
+
+  baserow:
+    image: "${BASEROW_IMAGE}"
+    restart: ${RESTART_POLICY}
+    deploy:
+      replicas: ${BASEROW_ENABLE}
+    ports:
+      - "28094:80"
+    volumes:
+      - "./baserow:/baserow/data"
+    environment:
+     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
+     - BASEROW_EXTRA_ALLOWED_HOSTS=${BASEROW_EXTRA_ALLOWED_HOSTS}

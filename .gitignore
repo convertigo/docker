@@ -2,3 +2,4 @@
 /.settings/
 /compose/mbaas/*
 !/compose/mbaas/docker-compose.yml
+!/compose/mbaas/.env
