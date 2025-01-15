@@ -19,7 +19,7 @@ services:
        -Dconvertigo.engine.billing.enabled=true
        -Dconvertigo.engine.billing.persistence.jdbc.username=${CONVERTIGO_BILLING_USER}
        -Dconvertigo.engine.billing.persistence.jdbc.password=${CONVERTIGO_BILLING_PASSWORD}
-       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/${CONVERTIGO_BILLING_DB}?useSSL=false&allowPublicKeyRetrieval=true
+       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/${CONVERTIGO_BILLING_DB}?useSSL=false\&allowPublicKeyRetrieval=true
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
     command: >
@@ -43,7 +43,7 @@ services:
        -Dconvertigo.engine.billing.enabled=true
        -Dconvertigo.engine.billing.persistence.jdbc.username=${CONVERTIGO_BILLING_USER}
        -Dconvertigo.engine.billing.persistence.jdbc.password=${CONVERTIGO_BILLING_PASSWORD}
-       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/{CONVERTIGO_BILLING_DB}?useSSL=false&allowPublicKeyRetrieval=true
+       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/{CONVERTIGO_BILLING_DB}?useSSL=false\&allowPublicKeyRetrieval=true
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
 
@@ -111,7 +111,7 @@ services:
             SSLCertificateKeyFile /usr/local/apache2/conf/certs/privkey.pem
             <Proxy \"balancer://convertigo_cluster\">
               BalancerMember http://convertigo_0:28080 route=0
-              BalancerMember http://convertigo_1:28080 route=1
+              #BalancerMember http://convertigo_1:28080 route=1
               ProxySet stickysession=ROUTEID
             </Proxy>
             ProxyPass \"/\" \"balancer://convertigo_cluster/\"
@@ -131,7 +131,7 @@ services:
           #Redirect permanent / https://${PUBLIC_HOSTNAME}/
           <Proxy \"balancer://convertigo_cluster\">
             BalancerMember http://convertigo_0:28080/convertigo route=0
-            BalancerMember http://convertigo_1:28080/convertigo route=1
+            #BalancerMember http://convertigo_1:28080/convertigo route=1
             ProxySet stickysession=ROUTEID
           </Proxy>
           ProxyPass \"/convertigo\" \"balancer://convertigo_cluster/\"
