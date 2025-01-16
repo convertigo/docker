@@ -22,6 +22,7 @@ services:
        -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/${CONVERTIGO_BILLING_DB}?useSSL=false\&allowPublicKeyRetrieval=true
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
+     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
     command: >
       /bin/sh -c "chown convertigo:convertigo /workspace
         /docker-entrypoint.sh convertigo"
@@ -46,6 +47,7 @@ services:
        -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/{CONVERTIGO_BILLING_DB}?useSSL=false\&allowPublicKeyRetrieval=true
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
+     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
 
   couchdb:
     image: "${COUCHDB_IMAGE}"
@@ -158,6 +160,10 @@ services:
       - "28094:80"
     volumes:
       - "./baserow:/baserow/data"
+    entrypoint: >
+      /bin/sh -c "
+        sed -i -e s,127.0.0.1,0.0.0.0, /baserow/supervisor/default_baserow_env.sh
+        /baserow.sh start"
     environment:
      - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
      - BASEROW_EXTRA_ALLOWED_HOSTS=${BASEROW_EXTRA_ALLOWED_HOSTS}
