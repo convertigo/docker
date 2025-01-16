@@ -97,6 +97,7 @@ services:
       /bin/sh -c "
         if ! grep -q 'fullchain.pem' /usr/local/apache2/conf/httpd.conf; then
         echo '
+        LoadModule rewrite_module modules/mod_rewrite.so
         LoadModule proxy_module modules/mod_proxy.so
         LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
         LoadModule proxy_http_module modules/mod_proxy_http.so
@@ -111,13 +112,16 @@ services:
             SSLEngine on
             SSLCertificateFile /usr/local/apache2/conf/certs/fullchain.pem
             SSLCertificateKeyFile /usr/local/apache2/conf/certs/privkey.pem
+            RewriteEngine On
+            RewriteRule ^/?$ /convertigo/ [R=301,L]
+            RewriteRule ^/convertigo$ /convertigo/ [R=301,L]
             <Proxy \"balancer://convertigo_cluster\">
               BalancerMember http://convertigo_0:28080 route=0
               #BalancerMember http://convertigo_1:28080 route=1
               ProxySet stickysession=ROUTEID
             </Proxy>
-            ProxyPass \"/\" \"balancer://convertigo_cluster/\"
-            ProxyPassReverse \"/\" \"balancer://convertigo_cluster/\"
+            ProxyPass \"/convertigo\" \"balancer://convertigo_cluster\"
+            ProxyPassReverse \"/convertigo\" \"balancer://convertigo_cluster\"
             ProxyPass \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
             ProxyPassReverse \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
             ProxyPass \"/ws/\" \"ws://baserow/ws/\"
@@ -131,13 +135,16 @@ services:
         <VirtualHost *:80>
           ServerName ${PUBLIC_HOSTNAME}
           #Redirect permanent / https://${PUBLIC_HOSTNAME}/
+          RewriteEngine On
+          RewriteRule ^/?$ /convertigo/ [R=301,L]
+          RewriteRule ^/convertigo$ /convertigo/ [R=301,L]
           <Proxy \"balancer://convertigo_cluster\">
             BalancerMember http://convertigo_0:28080/convertigo route=0
             #BalancerMember http://convertigo_1:28080/convertigo route=1
             ProxySet stickysession=ROUTEID
           </Proxy>
-          ProxyPass \"/convertigo\" \"balancer://convertigo_cluster/\"
-          ProxyPassReverse \"/convertigo\" \"balancer://convertigo_cluster/\"
+          ProxyPass \"/convertigo\" \"balancer://convertigo_cluster\"
+          ProxyPassReverse \"/convertigo\" \"balancer://convertigo_cluster\"
           ProxyPass \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
           ProxyPassReverse \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
           ProxyPass \"/ws/\" \"ws://baserow/ws/\"
