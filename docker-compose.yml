@@ -1,5 +1,5 @@
-# please also retrieve the .env file
-# https://github.com/convertigo/docker/raw/refs/heads/master/compose/mbaas/.env
+# Don't use this file alone, please retrieve https://github.com/convertigo/docker/archive/refs/heads/compose.zip
+# Unzip and run with "docker compose up -d"
 
 name: convertigo
 
@@ -13,7 +13,7 @@ services:
     ports:
      - "28080:28080"
     volumes:
-     - ./workspace:/workspace
+     - ./data/workspace:/workspace
     environment:
      - JAVA_OPTS=
        -Dconvertigo.engine.log4j.appender.CemsAppender.File=/workspace/logs/0/engine.log
@@ -39,7 +39,7 @@ services:
     ports:
      - "28081:28080"
     volumes:
-     - ./workspace:/workspace
+     - ./data/workspace:/workspace
     depends_on:
       - convertigo_0
     environment:
@@ -66,7 +66,7 @@ services:
      - COUCHDB_USER=${CONVERTIGO_FULLSYNC_USER}
      - COUCHDB_PASSWORD=${CONVERTIGO_FULLSYNC_PASSWORD}
     volumes:
-     - ./fullsync:/opt/couchdb/data
+     - ./data/fullsync:/opt/couchdb/data
     command: >
       /bin/sh -c "echo '[couchdb]
         single_node=true' > /opt/couchdb/etc/local.d/setup.ini
@@ -80,8 +80,8 @@ services:
     ports:
      - "28092:5432"
     volumes:
-     - ./timescaledb:/var/lib/postgresql/data
-     - ./init/timescaledb:/docker-entrypoint-initdb.d
+     - ./data/timescaledb:/var/lib/postgresql/data
+     - ./init/timescaledb:/docker-entrypoint-initdb.d:ro
     environment:
      - POSTGRES_PASSWORD=${TIMESCALEDB_PASSWORD}
      - POSTGRES_USER=${TIMESCALEDB_USER}
@@ -101,7 +101,7 @@ services:
       - "${HTTPD_HTTP_PORT}:80"
       - "${HTTPD_HTTPS_PORT}:443"
     volumes:
-      - "./certs:/usr/local/apache2/conf/certs:ro"
+      - "./data/certs:/usr/local/apache2/conf/certs:ro"
       - "./init/httpd:/usr/local/apache2/custom:ro"
     depends_on:
       - convertigo_0
@@ -126,7 +126,7 @@ services:
     ports:
       - "28094:80"
     volumes:
-      - "./baserow:/baserow/data"
+      - "./data/baserow:/baserow/data"
     entrypoint: >
       /bin/sh -c "
         sed -i -e s,127.0.0.1,0.0.0.0, /baserow/supervisor/default_baserow_env.sh
