@@ -5,6 +5,7 @@ name: convertigo
 
 services:
   convertigo_0:
+    hostname: convertigo_0
     image: "${CONVERTIGO_IMAGE}"
     restart: ${RESTART_POLICY}
     deploy:
@@ -19,7 +20,9 @@ services:
        -Dconvertigo.engine.billing.enabled=true
        -Dconvertigo.engine.billing.persistence.jdbc.username=${CONVERTIGO_BILLING_USER}
        -Dconvertigo.engine.billing.persistence.jdbc.password=${CONVERTIGO_BILLING_PASSWORD}
-       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/${CONVERTIGO_BILLING_DB}?useSSL=false\&allowPublicKeyRetrieval=true
+       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:postgresql://timescaledb/${CONVERTIGO_BILLING_DB}
+       -Dconvertigo.engine.billing.persistence.jdbc.driver=org.postgresql.Driver
+       -Dconvertigo.engine.billing.persistence.dialect=org.hibernate.dialect.PostgreSQLDialect
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
      - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
@@ -28,6 +31,7 @@ services:
         /docker-entrypoint.sh convertigo"
 
   convertigo_1:
+    hostname: convertigo_1
     image: "${CONVERTIGO_IMAGE}"
     restart: ${RESTART_POLICY}
     deploy:
@@ -44,7 +48,9 @@ services:
        -Dconvertigo.engine.billing.enabled=true
        -Dconvertigo.engine.billing.persistence.jdbc.username=${CONVERTIGO_BILLING_USER}
        -Dconvertigo.engine.billing.persistence.jdbc.password=${CONVERTIGO_BILLING_PASSWORD}
-       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:mysql://mysql:3306/{CONVERTIGO_BILLING_DB}?useSSL=false\&allowPublicKeyRetrieval=true
+       -Dconvertigo.engine.billing.persistence.jdbc.url=jdbc:postgresql://timescaledb/${CONVERTIGO_BILLING_DB}
+       -Dconvertigo.engine.billing.persistence.jdbc.driver=org.postgresql.Driver
+       -Dconvertigo.engine.billing.persistence.dialect=org.hibernate.dialect.PostgreSQLDialect
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
      - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
@@ -66,20 +72,25 @@ services:
         single_node=true' > /opt/couchdb/etc/local.d/setup.ini
         /docker-entrypoint.sh couchdb"
 
-  mysql:
-    image: "${MYSQL_IMAGE}"
+  timescaledb:
+    image: "${TIMESCALEDB_IMAGE}"
     restart: ${RESTART_POLICY}
     deploy:
-      replicas: ${MYSQL_ENABLE}
+      replicas: ${TIMESCALEDB_ENABLE}
     ports:
-     - "28092:3306"
+     - "28092:5432"
     volumes:
-     - ./analytics:/var/lib/mysql
+     - ./timescaledb:/var/lib/postgresql/data
+     - ./init/timescaledb:/docker-entrypoint-initdb.d
     environment:
-     - MYSQL_RANDOM_ROOT_PASSWORD=yes
-     - MYSQL_DATABASE=${CONVERTIGO_BILLING_DB}
-     - MYSQL_USER=${CONVERTIGO_BILLING_USER}
-     - MYSQL_PASSWORD=${CONVERTIGO_BILLING_PASSWORD}
+     - POSTGRES_PASSWORD=${TIMESCALEDB_PASSWORD}
+     - POSTGRES_USER=${TIMESCALEDB_USER}
+     - BILLING_DB=${CONVERTIGO_BILLING_DB}
+     - BILLING_PASSWORD=${CONVERTIGO_BILLING_PASSWORD}
+     - BILLING_USER=${CONVERTIGO_BILLING_USER}
+     - BASEROW_DB=${BASEROW_DB}
+     - BASEROW_USER=${BASEROW_USER}
+     - BASEROW_PASSWORD=${BASEROW_PASSWORD}
 
   httpd:
     image: "${HTTPD_IMAGE}"
@@ -91,70 +102,17 @@ services:
       - "${HTTPD_HTTPS_PORT}:443"
     volumes:
       - "./certs:/usr/local/apache2/conf/certs:ro"
+      - "./init/httpd:/usr/local/apache2/custom:ro"
     depends_on:
       - convertigo_0
+    environment:
+     - PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME}
+     - HTTPD_ROOT_URL=${HTTPD_ROOT_URL}
+     - CONVERTIGO_MULTI_ENABLE=${CONVERTIGO_MULTI_ENABLE}
     command: >
       /bin/sh -c "
-        if ! grep -q 'fullchain.pem' /usr/local/apache2/conf/httpd.conf; then
-        echo '
-        LoadModule rewrite_module modules/mod_rewrite.so
-        LoadModule proxy_module modules/mod_proxy.so
-        LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
-        LoadModule proxy_http_module modules/mod_proxy_http.so
-        LoadModule proxy_wstunnel_module modules/mod_proxy_wstunnel.so
-        LoadModule ssl_module modules/mod_ssl.so
-        LoadModule slotmem_shm_module modules/mod_slotmem_shm.so
-        LoadModule lbmethod_byrequests_module modules/mod_lbmethod_byrequests.so
-        <IfFile /usr/local/apache2/conf/certs/fullchain.pem>
-          Listen 443
-          <VirtualHost *:443>
-            ServerName ${PUBLIC_HOSTNAME}
-            SSLEngine on
-            SSLCertificateFile /usr/local/apache2/conf/certs/fullchain.pem
-            SSLCertificateKeyFile /usr/local/apache2/conf/certs/privkey.pem
-            RewriteEngine On
-            RewriteRule ^/?$ /convertigo/ [R=301,L]
-            RewriteRule ^/convertigo$ /convertigo/ [R=301,L]
-            <Proxy \"balancer://convertigo_cluster\">
-              BalancerMember http://convertigo_0:28080 route=0
-              #BalancerMember http://convertigo_1:28080 route=1
-              ProxySet stickysession=ROUTEID
-            </Proxy>
-            ProxyPass \"/convertigo\" \"balancer://convertigo_cluster\"
-            ProxyPassReverse \"/convertigo\" \"balancer://convertigo_cluster\"
-            ProxyPass \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
-            ProxyPassReverse \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
-            ProxyPass \"/ws/\" \"ws://baserow/ws/\"
-            ProxyPass \"/\" \"http://baserow/\"
-            ProxyPassReverse \"/\" \"http://baserow/\"
-
-            Header add Set-Cookie \"ROUTEID=.%{BALANCER_WORKER_ROUTE}e; Path=/; HttpOnly\" env=BALANCER_ROUTE_CHANGED
-            ProxyPreserveHost On
-          </VirtualHost>
-        </IfFile>
-        <VirtualHost *:80>
-          ServerName ${PUBLIC_HOSTNAME}
-          #Redirect permanent / https://${PUBLIC_HOSTNAME}/
-          RewriteEngine On
-          RewriteRule ^/?$ /convertigo/ [R=301,L]
-          RewriteRule ^/convertigo$ /convertigo/ [R=301,L]
-          <Proxy \"balancer://convertigo_cluster\">
-            BalancerMember http://convertigo_0:28080/convertigo route=0
-            #BalancerMember http://convertigo_1:28080/convertigo route=1
-            ProxySet stickysession=ROUTEID
-          </Proxy>
-          ProxyPass \"/convertigo\" \"balancer://convertigo_cluster\"
-          ProxyPassReverse \"/convertigo\" \"balancer://convertigo_cluster\"
-          ProxyPass \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
-          ProxyPassReverse \"/c8o\" \"balancer://convertigo_cluster/projects/BaserowIntegration/c8o\"
-          ProxyPass \"/ws/\" \"ws://baserow/ws/\"
-          ProxyPass \"/\" \"http://baserow/\"
-          ProxyPassReverse \"/\" \"http://baserow/\"
-          
-          Header add Set-Cookie \"ROUTEID=.%{BALANCER_WORKER_ROUTE}e; Path=/; HttpOnly\" env=BALANCER_ROUTE_CHANGED
-          ProxyPreserveHost On
-        </VirtualHost>
-        ' >> /usr/local/apache2/conf/httpd.conf
+        if ! grep -q 'Include /usr/local/apache2/custom/convertigo.conf' /usr/local/apache2/conf/httpd.conf; then
+          echo 'Include /usr/local/apache2/custom/convertigo.conf' >> /usr/local/apache2/conf/httpd.conf;
         fi
         httpd-foreground"
 
@@ -163,6 +121,8 @@ services:
     restart: ${RESTART_POLICY}
     deploy:
       replicas: ${BASEROW_ENABLE}
+    depends_on:
+      - timescaledb
     ports:
       - "28094:80"
     volumes:
@@ -174,3 +134,8 @@ services:
     environment:
      - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
      - BASEROW_EXTRA_ALLOWED_HOSTS=${BASEROW_EXTRA_ALLOWED_HOSTS}
+     - DATABASE_HOST=timescaledb
+     - DATABASE_PORT=5432
+     - DATABASE_NAME=${BASEROW_DB}
+     - DATABASE_USER=${BASEROW_USER}
+     - DATABASE_PASSWORD=${BASEROW_PASSWORD}

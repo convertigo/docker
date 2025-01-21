@@ -3,3 +3,4 @@
 /compose/mbaas/*
 !/compose/mbaas/docker-compose.yml
 !/compose/mbaas/.env
+!/compose/mbaas/init

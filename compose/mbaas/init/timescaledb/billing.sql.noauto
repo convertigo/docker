@@ -1,0 +1,227 @@
+-- Table: public.hticket
+
+-- DROP TABLE IF EXISTS public.hticket;
+
+-- SEQUENCE: public.hticket_id_seq
+
+-- DROP SEQUENCE IF EXISTS public.hticket_id_seq;
+
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+
+CREATE SEQUENCE IF NOT EXISTS public.hticket_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
+CREATE TABLE IF NOT EXISTS public.hticket
+(
+    id bigint NOT NULL DEFAULT nextval('hticket_id_seq'::regclass),
+    "clientIp" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "connectorName" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "connectorType" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "creationDate" timestamp without time zone NOT NULL,
+    "customerName" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "deviceUUID" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "projectName" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "requestableName" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "requestableType" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "responseTime" bigint NOT NULL,
+    score bigint NOT NULL,
+    "sessionID" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "uiID" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "userAgent" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    "userName" character varying(255) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    CONSTRAINT ticket_pkey PRIMARY KEY ("creationDate", id)
+)
+
+TABLESPACE pg_default;
+
+-- DROP INDEX IF EXISTS public."connectorNameIdx";
+
+CREATE INDEX IF NOT EXISTS "connectorNameIdx"
+    ON public.hticket USING btree
+    ("connectorName" COLLATE pg_catalog."POSIX" varchar_ops ASC NULLS LAST)
+    WITH (deduplicate_items=True)
+    TABLESPACE pg_default;
+
+COMMENT ON INDEX public."connectorNameIdx"
+    IS 'Index on the connectorName column for C8oBilling ticket table';
+-- Index: customerNameIdx
+
+-- DROP INDEX IF EXISTS public."customerNameIdx";
+
+CREATE INDEX IF NOT EXISTS "customerNameIdx"
+    ON public.hticket USING btree
+    ("customerName" COLLATE pg_catalog."default" text_pattern_ops ASC NULLS LAST)
+    WITH (deduplicate_items=True)
+    TABLESPACE pg_default;
+
+COMMENT ON INDEX public."customerNameIdx"
+    IS 'Indes on customer Name';
+-- Index: hticket_creationDate_idx
+
+-- DROP INDEX IF EXISTS public."hticket_creationDate_idx";
+
+CREATE INDEX IF NOT EXISTS "hticket_creationDate_idx"
+    ON public.hticket USING brin
+    ("creationDate")
+    WITH (pages_per_range=32)
+    TABLESPACE pg_default;
+-- Index: id_idx
+
+-- DROP INDEX IF EXISTS public.id_idx;
+
+CREATE INDEX IF NOT EXISTS id_idx
+    ON public.hticket USING btree
+    (id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: idx_creationdate_id
+
+-- DROP INDEX IF EXISTS public.idx_creationdate_id;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_creationdate_id
+    ON public.hticket USING btree
+    ("creationDate" ASC NULLS LAST, id ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: ticket_creationDate_idx
+
+-- DROP INDEX IF EXISTS public."ticket_creationDate_idx";
+
+CREATE INDEX IF NOT EXISTS "ticket_creationDate_idx"
+    ON public.hticket USING btree
+    ("creationDate" DESC NULLS FIRST)
+    TABLESPACE pg_default;
+-- Index: ticket_creationdate_customername_idx
+
+-- DROP INDEX IF EXISTS public.ticket_creationdate_customername_idx;
+
+CREATE INDEX IF NOT EXISTS ticket_creationdate_customername_idx
+    ON public.hticket USING btree
+    ("creationDate" ASC NULLS LAST, "customerName" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: ticket_customername_connectorname_creationdate_idx
+
+-- DROP INDEX IF EXISTS public.ticket_customername_connectorname_creationdate_idx;
+
+CREATE INDEX IF NOT EXISTS ticket_customername_connectorname_creationdate_idx
+    ON public.hticket USING btree
+    ("customerName" COLLATE pg_catalog."default" ASC NULLS LAST, "connectorName" COLLATE pg_catalog."default" ASC NULLS LAST, "creationDate" ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: ticket_customername_connectorname_idx
+
+-- DROP INDEX IF EXISTS public.ticket_customername_connectorname_idx;
+
+CREATE INDEX IF NOT EXISTS ticket_customername_connectorname_idx
+    ON public.hticket USING btree
+    ("customerName" COLLATE pg_catalog."default" ASC NULLS LAST, "connectorName" COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: ticket_customername_creationdate_idx
+
+-- DROP INDEX IF EXISTS public.ticket_customername_creationdate_idx;
+
+CREATE INDEX IF NOT EXISTS ticket_customername_creationdate_idx
+    ON public.hticket USING btree
+    ("customerName" COLLATE pg_catalog."default" ASC NULLS LAST, "creationDate" ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: ticket_customername_projectname_creationdate_idx
+
+-- DROP INDEX IF EXISTS public.ticket_customername_projectname_creationdate_idx;
+
+CREATE INDEX IF NOT EXISTS ticket_customername_projectname_creationdate_idx
+    ON public.hticket USING btree
+    ("customerName" COLLATE pg_catalog."default" ASC NULLS LAST, "projectName" COLLATE pg_catalog."default" ASC NULLS LAST, "creationDate" ASC NULLS LAST)
+    INCLUDE("customerName", "projectName", "creationDate")
+    WITH (deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: ticket_customername_projectname_idx
+
+-- DROP INDEX IF EXISTS public.ticket_customername_projectname_idx;
+
+CREATE INDEX IF NOT EXISTS ticket_customername_projectname_idx
+    ON public.hticket USING btree
+    ("customerName" COLLATE pg_catalog."default" ASC NULLS LAST, "projectName" COLLATE pg_catalog."default" ASC NULLS LAST)
+    INCLUDE("customerName", "projectName")
+    WITH (deduplicate_items=True)
+    TABLESPACE pg_default;
+
+-- Convert it to a hypertable
+SELECT create_hypertable('hticket', 'creationDate');
+
+CREATE OR REPLACE FUNCTION public.handle_ticket_view_insert()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+DECLARE
+    new_id BIGINT;
+BEGIN
+    INSERT INTO "hticket" (
+        "clientIp",
+        "connectorName",
+        "connectorType",
+        "creationDate",
+        "customerName",
+        "deviceUUID",
+        "projectName",
+        "requestableName",
+        "requestableType",
+        "responseTime",
+        "score",
+        "sessionID",
+        "uiID",
+        "userAgent",
+        "userName"
+    )
+    VALUES (
+        NEW.clientip,
+        NEW.connectorname,
+        NEW.connectortype,
+        to_timestamp(NEW.creationdate * 0.001), -- Convertir les millisecondes en timestamp
+        NEW.customername,
+        NEW.deviceuuid,
+        NEW.projectname,
+        NEW.requestablename,
+        NEW.requestabletype,
+        NEW.responsetime,
+        NEW.score,
+        NEW.sessionid,
+        NEW.uiid,
+        NEW.useragent,
+        NEW.username
+    )
+    RETURNING id INTO new_id; -- Remplacez 'id' par le nom de votre colonne de clé primaire
+
+    NEW.id := new_id; -- Assignez la valeur de la clé primaire générée à NEW.id
+    RETURN NEW;
+END;
+$BODY$;
+
+CREATE OR REPLACE VIEW public.ticket
+ AS
+ SELECT id,
+    "clientIp" AS clientip,
+    "connectorName" AS connectorname,
+    "connectorType" AS connectortype,
+    EXTRACT(epoch FROM "creationDate")::bigint * 1000 AS creationdate,
+    "customerName" AS customername,
+    "deviceUUID" AS deviceuuid,
+    "projectName" AS projectname,
+    "requestableName" AS requestablename,
+    "requestableType" AS requestabletype,
+    "responseTime" AS responsetime,
+    score,
+    "sessionID" AS sessionid,
+    "uiID" AS uiid,
+    "userAgent" AS useragent,
+    "userName" AS username
+   FROM hticket;
+
+CREATE OR REPLACE TRIGGER ticket_view_insert_trigger
+    INSTEAD OF INSERT
+    ON public.ticket
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_ticket_view_insert();
+
