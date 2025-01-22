@@ -1,5 +1,7 @@
-# Don't use this file alone, please retrieve https://github.com/convertigo/docker/archive/refs/heads/compose.zip
-# Unzip and run with "docker compose up -d"
+# Don't use this file alone, please retrieve https://github.com/convertigo/docker/archive/refs/heads/compose.tar.gz
+# You can retrieve it in your current directory with:
+# curl -sL https://github.com/convertigo/docker/archive/refs/heads/compose.tar.gz | tar xvz --strip-components=1
+# Edit the .env file then start with "docker compose up -d" and end with "docker compose down"
 
 name: convertigo
 
@@ -12,8 +14,10 @@ services:
       replicas: 1
     ports:
      - "28080:28080"
+     - "28443:28443"
     volumes:
      - ./data/workspace:/workspace
+     - ./init/certs:/ssl:ro
     environment:
      - JAVA_OPTS=
        -Dconvertigo.engine.log4j.appender.CemsAppender.File=/workspace/logs/0/engine.log
@@ -25,7 +29,17 @@ services:
        -Dconvertigo.engine.billing.persistence.dialect=org.hibernate.dialect.PostgreSQLDialect
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
-     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
+     - CONVERTIGO_ADMIN_USER
+     - CONVERTIGO_ADMIN_PASSWORD
+     - LOG_STDOUT=${CONVERTIGO_LOG_STDOUT}
+     - LOG_FILE=${CONVERTIGO_LOG_FILE}
+     - JXMX=${CONVERTIGO_JXMX}
+     - COOKIE_PATH=${CONVERTIGO_COOKIE_PATH}
+     - COOKIE_SECURE=${CONVERTIGO_COOKIE_SECURE}
+     - COOKIE_SAMESITE=${CONVERTIGO_COOKIE_SAMESITE}
+     - SESSION_TIMEOUT=${CONVERTIGO_SESSION_TIMEOUT}
+     - DISABLE_SUDO=${CONVERTIGO_DISABLE_SUDO}
+     - BASEROW_PUBLIC_URL
     command: >
       /bin/sh -c "chown convertigo:convertigo /workspace
         /docker-entrypoint.sh convertigo"
@@ -38,6 +52,7 @@ services:
       replicas: ${CONVERTIGO_MULTI_ENABLE}
     ports:
      - "28081:28080"
+     - "28444:28443"
     volumes:
      - ./data/workspace:/workspace
     depends_on:
@@ -53,7 +68,17 @@ services:
        -Dconvertigo.engine.billing.persistence.dialect=org.hibernate.dialect.PostgreSQLDialect
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
-     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
+     - CONVERTIGO_ADMIN_USER
+     - CONVERTIGO_ADMIN_PASSWORD
+     - LOG_STDOUT=${CONVERTIGO_LOG_STDOUT}
+     - LOG_FILE=${CONVERTIGO_LOG_FILE}
+     - JXMX=${CONVERTIGO_JXMX}
+     - COOKIE_PATH=${CONVERTIGO_COOKIE_PATH}
+     - COOKIE_SECURE=${CONVERTIGO_COOKIE_SECURE}
+     - COOKIE_SAMESITE=${CONVERTIGO_COOKIE_SAMESITE}
+     - SESSION_TIMEOUT=${CONVERTIGO_SESSION_TIMEOUT}
+     - DISABLE_SUDO=${CONVERTIGO_DISABLE_SUDO}
+     - BASEROW_PUBLIC_URL
 
   couchdb:
     image: "${COUCHDB_IMAGE}"
@@ -88,9 +113,9 @@ services:
      - BILLING_DB=${CONVERTIGO_BILLING_DB}
      - BILLING_PASSWORD=${CONVERTIGO_BILLING_PASSWORD}
      - BILLING_USER=${CONVERTIGO_BILLING_USER}
-     - BASEROW_DB=${BASEROW_DB}
-     - BASEROW_USER=${BASEROW_USER}
-     - BASEROW_PASSWORD=${BASEROW_PASSWORD}
+     - BASEROW_DB
+     - BASEROW_USER
+     - BASEROW_PASSWORD
 
   httpd:
     image: "${HTTPD_IMAGE}"
@@ -106,9 +131,11 @@ services:
     depends_on:
       - convertigo_0
     environment:
-     - PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME}
-     - HTTPD_ROOT_URL=${HTTPD_ROOT_URL}
-     - CONVERTIGO_MULTI_ENABLE=${CONVERTIGO_MULTI_ENABLE}
+     - PUBLIC_HOSTNAME
+     - HTTPD_HTTPS_PORT
+     - HTTPD_HTTPS_REDIRECT
+     - HTTPD_ROOT_URL
+     - CONVERTIGO_MULTI_ENABLE
     command: >
       /bin/sh -c "
         if ! grep -q 'Include /usr/local/apache2/custom/convertigo.conf' /usr/local/apache2/conf/httpd.conf; then
@@ -132,8 +159,8 @@ services:
         sed -i -e s,127.0.0.1,0.0.0.0, /baserow/supervisor/default_baserow_env.sh
         /baserow.sh start"
     environment:
-     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
-     - BASEROW_EXTRA_ALLOWED_HOSTS=${BASEROW_EXTRA_ALLOWED_HOSTS}
+     - BASEROW_PUBLIC_URL
+     - BASEROW_EXTRA_ALLOWED_HOSTS
      - DATABASE_HOST=timescaledb
      - DATABASE_PORT=5432
      - DATABASE_NAME=${BASEROW_DB}
