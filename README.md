@@ -1,12 +1,15 @@
 # Docker Compose files for Convertigo
 
-Please visit [the main repository](https://github.com/convertigo/convertigo/tree/master)
-Or [the official Docker documentation](https://hub.docker.com/_/convertigo)
+Please visit [the main repository](https://github.com/convertigo/convertigo/tree/master) for information about the Convertigo Platform
+
+or [the official Docker documentation](https://hub.docker.com/_/convertigo) for documentation of the Convertigo Docker image.
 
 ## Quick start
 
 You can retrieve it in your current directory with:
-`curl -sL https://github.com/convertigo/docker/archive/refs/heads/compose.tar.gz | tar xvz --strip-components=1`
+```
+curl -sL https://github.com/convertigo/docker/archive/refs/heads/compose.tar.gz | tar xvz --strip-components=1
+```
 
 Edit the `.env` file then start with `docker compose up -d` and end with `docker compose down`.
 
@@ -33,7 +36,9 @@ To enable `https` for `convertigo` (on port `28443`) and `httpd` (on port `443`)
 Check that `PUBLIC_HOSTNAME` is the same as the certificate and solved by your DNS.
 
 If you want to test with a self-signed certificate (set `CN` the same value as `PUBLIC_HOSTNAME`):
- openssl req -x509 -newkey rsa:4096 -keyout init/certs/key.pem -out init/certs/full.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname"
+```
+openssl req -x509 -newkey rsa:4096 -keyout init/certs/key.pem -out init/certs/full.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname"
+```
 
 Then `docker compose restart convertigo_0 httpd`.
 
