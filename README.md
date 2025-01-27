@@ -23,6 +23,20 @@ Please edit the `.env` file to enable/disable services and do configurations.
 
 It's recommended to change default password.
 
+## Podman / SE Linux
+
+This configuration works also with a `podman compose` stack, even rootless. Here some complementary setup steps before the first run:
+
+```shell
+# next to the docker-compose.yml, allow container to mount those directories
+chcon -Rt container_file_t data init
+chmod -R o+w data
+
+# to enable 80 & 443 for a rootless user (default port of httpd, can be changed in the .env file)
+echo "net.ipv4.ip_unprivileged_port_start=80" | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+```
+
 ## Network Access
 
 By default, only the `http` on port `28080` is exposed to access Convertigo.

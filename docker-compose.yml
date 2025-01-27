@@ -29,8 +29,8 @@ services:
        -Dconvertigo.engine.billing.persistence.dialect=org.hibernate.dialect.PostgreSQLDialect
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
-     - CONVERTIGO_ADMIN_USER
-     - CONVERTIGO_ADMIN_PASSWORD
+     - CONVERTIGO_ADMIN_USER=${CONVERTIGO_ADMIN_USER}
+     - CONVERTIGO_ADMIN_PASSWORD=${CONVERTIGO_ADMIN_PASSWORD}
      - LOG_STDOUT=${CONVERTIGO_LOG_STDOUT}
      - LOG_FILE=${CONVERTIGO_LOG_FILE}
      - JXMX=${CONVERTIGO_JXMX}
@@ -39,7 +39,7 @@ services:
      - COOKIE_SAMESITE=${CONVERTIGO_COOKIE_SAMESITE}
      - SESSION_TIMEOUT=${CONVERTIGO_SESSION_TIMEOUT}
      - DISABLE_SUDO=${CONVERTIGO_DISABLE_SUDO}
-     - BASEROW_PUBLIC_URL
+     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
     command: >
       /bin/sh -c "chown convertigo:convertigo /workspace
         /docker-entrypoint.sh convertigo"
@@ -68,8 +68,8 @@ services:
        -Dconvertigo.engine.billing.persistence.dialect=org.hibernate.dialect.PostgreSQLDialect
        -Dconvertigo.engine.fullsync.couch.username=${CONVERTIGO_FULLSYNC_USER}
        -Dconvertigo.engine.fullsync.couch.password=${CONVERTIGO_FULLSYNC_PASSWORD}
-     - CONVERTIGO_ADMIN_USER
-     - CONVERTIGO_ADMIN_PASSWORD
+     - CONVERTIGO_ADMIN_USER=${CONVERTIGO_ADMIN_USER}
+     - CONVERTIGO_ADMIN_PASSWORD=${CONVERTIGO_ADMIN_PASSWORD}
      - LOG_STDOUT=${CONVERTIGO_LOG_STDOUT}
      - LOG_FILE=${CONVERTIGO_LOG_FILE}
      - JXMX=${CONVERTIGO_JXMX}
@@ -78,7 +78,7 @@ services:
      - COOKIE_SAMESITE=${CONVERTIGO_COOKIE_SAMESITE}
      - SESSION_TIMEOUT=${CONVERTIGO_SESSION_TIMEOUT}
      - DISABLE_SUDO=${CONVERTIGO_DISABLE_SUDO}
-     - BASEROW_PUBLIC_URL
+     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
 
   couchdb:
     image: "${COUCHDB_IMAGE}"
@@ -113,9 +113,9 @@ services:
      - BILLING_DB=${CONVERTIGO_BILLING_DB}
      - BILLING_PASSWORD=${CONVERTIGO_BILLING_PASSWORD}
      - BILLING_USER=${CONVERTIGO_BILLING_USER}
-     - BASEROW_DB
-     - BASEROW_USER
-     - BASEROW_PASSWORD
+     - BASEROW_DB=${BASEROW_DB}
+     - BASEROW_USER=${BASEROW_USER}
+     - BASEROW_PASSWORD=${BASEROW_PASSWORD}
     command: >
       /bin/sh -c "
         chmod +x /docker-entrypoint-initdb.d/*.sh
@@ -135,11 +135,11 @@ services:
     depends_on:
       - convertigo_0
     environment:
-     - PUBLIC_HOSTNAME
-     - HTTPD_HTTPS_PORT
-     - HTTPD_HTTPS_REDIRECT
-     - HTTPD_ROOT_URL
-     - CONVERTIGO_MULTI_ENABLE
+     - PUBLIC_HOSTNAME=${PUBLIC_HOSTNAME}
+     - HTTPD_HTTPS_PORT=${HTTPD_HTTPS_PORT}
+     - HTTPD_HTTPS_REDIRECT=${HTTPD_HTTPS_REDIRECT}
+     - HTTPD_ROOT_URL=${HTTPD_ROOT_URL}
+     - CONVERTIGO_MULTI_ENABLE=${CONVERTIGO_MULTI_ENABLE}
     command: >
       /bin/sh -c "
         if ! grep -q 'Include /usr/local/apache2/custom/convertigo.conf' /usr/local/apache2/conf/httpd.conf; then
@@ -163,8 +163,8 @@ services:
         sed -i -e s,127.0.0.1,0.0.0.0, /baserow/supervisor/default_baserow_env.sh
         /baserow.sh start"
     environment:
-     - BASEROW_PUBLIC_URL
-     - BASEROW_EXTRA_ALLOWED_HOSTS
+     - BASEROW_PUBLIC_URL=${BASEROW_PUBLIC_URL}
+     - BASEROW_EXTRA_ALLOWED_HOSTS=${BASEROW_EXTRA_ALLOWED_HOSTS}
      - DATABASE_HOST=timescaledb
      - DATABASE_PORT=5432
      - DATABASE_NAME=${BASEROW_DB}
